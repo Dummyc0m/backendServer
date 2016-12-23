@@ -1,8 +1,10 @@
 package cn.com.guardiantech.classroom.server.data.user
 
+import cn.codetector.util.Configuration.ConfigurationManager
 import cn.codetector.util.Validator.SHA
 import cn.com.guardiantech.classroom.server.data.AbstractDataService
 import cn.com.guardiantech.classroom.server.data.configuration.DatabaseConfiguration
+import cn.com.guardiantech.classroom.server.data.permission.Permission
 import cn.com.guardiantech.classroom.server.data.permission.PermissionManager
 import com.sun.org.apache.xpath.internal.operations.Bool
 import io.vertx.core.AsyncResult
@@ -12,6 +14,8 @@ import io.vertx.core.logging.LoggerFactory
 import java.util.*
 
 object UserManager : AbstractDataService() {
+    private val userConfiguration = ConfigurationManager.getConfiguration("user.config.json")
+    private val defaultUserStatus = userConfiguration.getIntegerValue("defaultUserStatus",0)
     val allUsers: HashSet<User> = HashSet()
     val logger = LoggerFactory.getLogger(this.javaClass)
 
@@ -90,11 +94,19 @@ object UserManager : AbstractDataService() {
                 conn.result().query("SELECT AUTO_INCREMENT as `value` FROM information_schema.TABLES WHERE TABLE_SCHEMA = `${DatabaseConfiguration.db_name}` AND TABLE_NAME = `${DatabaseConfiguration.db_prefix}_auth`", {
                     ai ->
                     val nextAiValue = ai.result().rows[0].getInteger("value")
-                    conn.result().updateWithParams("INSERT INTO `${DatabaseConfiguration.db_prefix}_auth` (`email`,`password`,`2fa`) VALUES (?,?,'')", JsonArray(arrayListOf(email, SHA.getSHA256String(password))), { insert ->
+                    conn.result().updateWithParams("INSERT INTO `${DatabaseConfiguration.db_prefix}_auth` (`email`,`password`,`2fa`, userStatus) VALUES (?,?,'',?)", JsonArray(arrayListOf(email, SHA.getSHA256String(password), defaultUserStatus)), { insert ->
                         if (insert.succeeded()) {
                             conn.result().updateWithParams("INSERT INTO `${DatabaseConfiguration.db_prefix}_user_profile` (`id`,`name`) VALUES (?,?) ON DUPLICATE KEY UPDATE `name` = VALUES(`name`)", JsonArray(arrayListOf(nextAiValue, name)), { profile ->
                                 conn.result().close ()
                                 handler.invoke(Future.succeededFuture(true))
+                                if (profile.succeeded()){
+                                    this.allUsers.add(User(nextAiValue,email,SHA.getSHA256String(password), defaultUserStatus, "", PermissionManager.getRoleByName("user")))
+                                    markChange()
+                                }else{
+                                    saveToDatabase {
+                                        loadFromDatabase()
+                                    }
+                                }
                             })
                         } else {
                             handler.invoke(Future.failedFuture(insert.cause()))
