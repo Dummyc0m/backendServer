@@ -120,4 +120,14 @@ object UserManager : AbstractDataService() {
         }
     }
 
+    fun  getUserById(id: Int): User {
+        try {
+            return (allUsers.find { user ->
+                user.id == id
+            })!!
+        } catch (e: Throwable) {
+            throw IllegalArgumentException("requested User does not exist. Please check use hasUser(username) before requesting")
+        }
+    }
+
 }

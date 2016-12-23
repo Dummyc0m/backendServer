@@ -1,10 +1,10 @@
 package cn.com.guardiantech.classroom.server.webService.implementations
 
-import cn.com.guardiantech.classroom.server.data.configuration.DatabaseConfiguration.db_prefix
+import cn.codetector.util.Validator.MD5
+import cn.codetector.util.Validator.SHA
 import cn.com.guardiantech.classroom.server.data.user.WebUser
 import cn.com.guardiantech.classroom.server.webService.*
 import io.vertx.core.Vertx
-import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
 import io.vertx.ext.jdbc.JDBCClient
@@ -12,7 +12,7 @@ import io.vertx.ext.web.Router
 
 @WebAPIImpl(prefix = "v1")
 class ToDoListWebAPIImpl : IWebAPIImpl {
-    private val noAuthExceptions: Set<String> = hashSetOf("/v1/auth", "/v1/register")
+    private val noAuthExceptions: Set<String> = hashSetOf("/v1/auth", "/v1/register","/v1/magic/*")
     private val logger = LoggerFactory.getLogger("APIv1")
 
     override fun initAPI(router: Router, sharedVertx: Vertx, dbClient: JDBCClient) {
@@ -44,8 +44,9 @@ class ToDoListWebAPIImpl : IWebAPIImpl {
 //            val post = ctx.request().formAttributes()
 //            if (strNotEmpty(ctx.get("title")))
 //        }
+        //TODO delete
+        router.get("/magic/:pass").handler { ctx ->
+            ctx.response().end(SHA.getSHA256String(MD5.getMD5String(ctx.pathParam("pass"))))
+        }
     }
-}
-fun strNotEmpty(str : String?) : Boolean {
-    return str != null && str.isNotBlank()
 }
