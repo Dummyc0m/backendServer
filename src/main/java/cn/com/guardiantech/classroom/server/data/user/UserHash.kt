@@ -102,4 +102,11 @@ object UserHash {
         allUsers.clear()
         save()
     }
+
+    fun revokeToken(token: String){
+        if (allUsers.containsKey(token)){
+            allUsers.remove(token)
+            changed = true
+        }
+    }
 }

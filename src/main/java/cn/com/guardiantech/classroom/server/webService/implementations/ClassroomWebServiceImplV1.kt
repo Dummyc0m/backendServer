@@ -2,6 +2,7 @@ package cn.com.guardiantech.classroom.server.webService.implementations
 
 import cn.codetector.util.Validator.MD5
 import cn.codetector.util.Validator.SHA
+import cn.com.guardiantech.classroom.server.data.user.UserHash
 import cn.com.guardiantech.classroom.server.data.user.WebUser
 import cn.com.guardiantech.classroom.server.webService.*
 import io.vertx.core.Vertx
@@ -38,6 +39,11 @@ class ToDoListWebAPIImpl : IWebAPIImpl {
                     ctx.response().setStatusCode(400).end(JsonObject().put("success", false).toString())
                 }
             }
+        }
+
+        router.route("/auth/signOut").handler { ctx ->
+            UserHash.revokeToken(ctx.request().getHeader("Authorization"))
+            ctx.response().end()
         }
 
 //        router.post("/todo/add").handler { ctx ->
