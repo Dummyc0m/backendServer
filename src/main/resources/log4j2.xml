@@ -1,0 +1,34 @@
+<Configuration>
+    <Appenders>
+        <Console name="SysOut" target="SYSTEM_OUT">
+            <PatternLayout pattern="[%d{HH:mm:ss}] [%logger{1}/%level]: %msg%n"/>
+        </Console>
+        <RollingRandomAccessFile name="File" fileName="logs/latest.log" filePattern="logs/%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="[%d{HH:mm:ss}] [%t/%level] [%logger{1}]: %msg%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <OnStartupTriggeringPolicy/>
+            </Policies>
+        </RollingRandomAccessFile>
+        <RollingRandomAccessFile name="ServicesLog" fileName="logs/services/latest.log"
+                                 filePattern="logs/services/%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="[%d{HH:mm:ss}] [%t/%level] [%logger{1}]: %msg%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <OnStartupTriggeringPolicy/>
+            </Policies>
+        </RollingRandomAccessFile>
+    </Appenders>
+    <Loggers>
+        <Logger name="cn.codetector.guardianCheck.server.webService.WebService" level="TRACE">
+            <AppenderRef ref="ServicesLog" level="trace"/>
+        </Logger>
+        <Logger name="io.vertx.ext.auth.jwt.impl.JWT" level="WARN"/>
+        <Logger name="io.vertx.ext.web.impl.RoutingContextImplBase" level="WARN"/>
+        <Logger name="io.vertx.ext.web.impl.RouterImpl" level="WARN"/>
+        <Root level="trace">
+            <AppenderRef ref="SysOut"/>
+            <AppenderRef ref="File" level="warn"/>
+        </Root>
+    </Loggers>
+</Configuration>
