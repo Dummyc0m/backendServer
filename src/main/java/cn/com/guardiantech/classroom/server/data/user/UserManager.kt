@@ -16,7 +16,7 @@ object UserManager : AbstractDataService() {
     }
 
     override fun saveToDatabase(action: () -> Unit) {
-        AbstractDataService.dbClient!!.getConnection { conn ->
+        dbClient!!.getConnection { conn ->
             logger.trace("Saving users to configuration...")
             val users: MutableList<JsonArray> = ArrayList()
             this.allUsers.values.forEach { user ->
@@ -43,8 +43,8 @@ object UserManager : AbstractDataService() {
     }
 
     override fun loadFromDatabase(action: () -> Unit) {
-        assert(AbstractDataService.isInitialized())
-        AbstractDataService.dbClient!!.getConnection { conn ->
+        assert(isInitialized())
+        dbClient!!.getConnection { conn ->
             logger.trace("Loading Users from Database...")
             if (conn.succeeded()) {
                 conn.result().query("SELECT * FROM `${DatabaseConfiguration.db_prefix}_auth`", { result ->

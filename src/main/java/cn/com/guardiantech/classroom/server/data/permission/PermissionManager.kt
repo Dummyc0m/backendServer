@@ -38,7 +38,7 @@ object PermissionManager : AbstractDataService() {
 
     fun registerPermission(name: String) {
         serverPermissions.addPermission(Permission(name))
-        AbstractDataService.markChange()
+        markChange()
         savePermissionTable { }
     }
 
@@ -49,7 +49,7 @@ object PermissionManager : AbstractDataService() {
             val perm = Permission(name)
             logger.trace("Permission created on use : $perm")
             serverPermissions.addPermission(perm)
-            AbstractDataService.markChange()
+            markChange()
             return perm
         }
     }
@@ -64,7 +64,7 @@ object PermissionManager : AbstractDataService() {
 
     fun createRoleWithName(name: String): Boolean {
         if (!serverRoles.containsKey(name)) {
-            AbstractDataService.markChange()
+            markChange()
             return (serverRoles.put(name, Role(name)) != null)
         } else {
             return false
@@ -72,9 +72,9 @@ object PermissionManager : AbstractDataService() {
     }
 
     fun savePermissionTable(action: () -> Unit) {
-        assert(AbstractDataService.isInitialized())
+        assert(isInitialized())
         logger.trace("Saving Permission Table...")
-        AbstractDataService.dbClient!!.getConnection { conn ->
+        dbClient!!.getConnection { conn ->
             if (conn.succeeded()) {
                 val params = ArrayList<JsonArray>()
                 serverPermissions.permissions.values.forEach { perm ->
@@ -100,9 +100,9 @@ object PermissionManager : AbstractDataService() {
     }
 
     fun saveRolesTable(action: () -> Unit) {
-        assert(AbstractDataService.isInitialized())
+        assert(isInitialized())
         logger.trace("Saving Roles Table...")
-        AbstractDataService.dbClient!!.getConnection { conn ->
+        dbClient!!.getConnection { conn ->
             if (conn.succeeded()) {
                 val roles = ArrayList<JsonArray>()
                 serverRoles.values.forEach { role ->
@@ -146,8 +146,8 @@ object PermissionManager : AbstractDataService() {
     }
 
     fun loadPermissionsFromDatabase(action: () -> Unit) {
-        assert(AbstractDataService.isInitialized())
-        AbstractDataService.dbClient!!.getConnection { conn ->
+        assert(isInitialized())
+        dbClient!!.getConnection { conn ->
             if (conn.succeeded()) {
                 logger.trace("Loading permissions from configuration...")
                 conn.result().query("SELECT * FROM `${DatabaseConfiguration.db_prefix}_permission`", {
@@ -171,7 +171,7 @@ object PermissionManager : AbstractDataService() {
 
     fun loadRolesFromDatabase(action: () -> Unit) {
         logger.trace("Loading serverRoles from configuration...")
-        AbstractDataService.dbClient!!.getConnection { conn ->
+        dbClient!!.getConnection { conn ->
             if (conn.succeeded()) {
                 conn.result().query("SELECT * FROM `${DatabaseConfiguration.db_prefix}_roles`", {
                     query ->
@@ -198,8 +198,8 @@ object PermissionManager : AbstractDataService() {
     }
 
     override fun tick() {
-        if (AbstractDataService.hasChanged()) {
-            AbstractDataService.saveToDatabase()
+        if (hasChanged()) {
+            saveToDatabase()
         }
     }
 }

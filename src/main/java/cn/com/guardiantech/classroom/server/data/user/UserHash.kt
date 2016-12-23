@@ -45,7 +45,7 @@ object UserHash {
                 val cachedData = JsonObject(dataString).getJsonArray("cache")
                 cachedData.forEach { item ->
                     if ((item as JsonObject).getString("user").isNotBlank() && UserManager.hasUser(item.getString("user"))) {
-                        allUsers.put((item as JsonObject).getString("key"), WebUser(UserManager.getUserByUsername(item.getString("user")), item.getLong("lastActive")))
+                        allUsers.put(item .getString("key"), WebUser(UserManager.getUserByUsername(item.getString("user")), item.getLong("lastActive")))
                     }
                 }
                 logger.trace("All (${allUsers.size}) user cache loaded")
