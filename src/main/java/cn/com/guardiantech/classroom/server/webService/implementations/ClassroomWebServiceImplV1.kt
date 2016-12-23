@@ -40,23 +40,6 @@ class ToDoListWebAPIImpl : IWebAPIImpl {
             }
         }
 
-        router.get("/todo/list").handler { ctx ->
-            dbClient.getConnection { conn ->
-                if (conn.succeeded()) {
-                    conn.result().queryWithParams("SELECT *, UNIX_TIMESTAMP(`itemDue`) as `itemDue` FROM `${db_prefix}_items` WHERE `itemOwner` = ?", JsonArray().add(ctx.user().principal().getString("username")), { q ->
-                        if (q.succeeded()){
-                            ctx.response().end(JsonObject().put("items",q.result().rows).toString())
-                        } else {
-                            ctx.fail(500)
-                        }
-                        conn.result().close()
-                    })
-                } else {
-                    ctx.fail(500)
-                }
-            }
-        }
-
 //        router.post("/todo/add").handler { ctx ->
 //            val post = ctx.request().formAttributes()
 //            if (strNotEmpty(ctx.get("title")))
