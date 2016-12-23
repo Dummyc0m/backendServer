@@ -28,8 +28,8 @@ class IDAuthProvider : AuthProvider {
 //        val username:String = authInfo.getString("username")!!
 //        val db_password:String = authInfo.getString("db_password")!!
 //        if (UserManager.hasUser(username)){
-//            if (UserManager.getUserByUsername(username).authenticate(password)){
-//                resultHandler!!.handle(Future.succeededFuture(WebUser(UserManager.getUserByUsername(username))))
+//            if (UserManager.getUserByEmail(username).authenticate(password)){
+//                resultHandler!!.handle(Future.succeededFuture(WebUser(UserManager.getUserByEmail(username))))
 //            }else{
 //                resultHandler!!.handle(Future.failedFuture("Wrong password"))
 //            }

@@ -1,14 +1,18 @@
 package cn.com.guardiantech.classroom.server.data.user
 
+import cn.codetector.util.Validator.SHA
 import cn.com.guardiantech.classroom.server.data.AbstractDataService
 import cn.com.guardiantech.classroom.server.data.configuration.DatabaseConfiguration
 import cn.com.guardiantech.classroom.server.data.permission.PermissionManager
+import com.sun.org.apache.xpath.internal.operations.Bool
+import io.vertx.core.AsyncResult
+import io.vertx.core.Future
 import io.vertx.core.json.JsonArray
 import io.vertx.core.logging.LoggerFactory
 import java.util.*
 
 object UserManager : AbstractDataService() {
-    val allUsers: MutableMap<String, User> = HashMap()
+    val allUsers: HashSet<User> = HashSet()
     val logger = LoggerFactory.getLogger(this.javaClass)
 
     override fun initialize() {
@@ -19,11 +23,11 @@ object UserManager : AbstractDataService() {
         dbClient!!.getConnection { conn ->
             logger.trace("Saving users to configuration...")
             val users: MutableList<JsonArray> = ArrayList()
-            this.allUsers.values.forEach { user ->
-                users.add(JsonArray().add(user.username).add(user.passwordHash).add(user.role.name))
+            this.allUsers.forEach { user ->
+                users.add(JsonArray().add(user.id).add(user.email).add(user.passwordHash).add(user.accountStatus).add(user.accountStatus).add(user.role.name))
             }
             if (conn.succeeded()) {
-                conn.result().batchWithParams("INSERT INTO `${DatabaseConfiguration.db_prefix}_auth` (`username`,`password`,`role`) VALUES (?,?,?) ON DUPLICATE KEY UPDATE `password` = VALUES(`password`), `role` = VALUES(`role`)", users, {
+                conn.result().batchWithParams("INSERT INTO `${DatabaseConfiguration.db_prefix}_auth` (`id`, `email`,`password`,`accountStatus`,`2fa`,`role`) VALUES (?,?,?,?,?,?) ON DUPLICATE KEY UPDATE `password` = VALUES(`password`),`email` = VALUES(`email`),`accountStatus` = VALUES(`accountStatus`),`2fa` = VALUES(`2fa`), `role` = VALUES(`role`)", users, {
                     result ->
                     if (result.succeeded()) {
                         var success = 0
@@ -50,8 +54,8 @@ object UserManager : AbstractDataService() {
                 conn.result().query("SELECT * FROM `${DatabaseConfiguration.db_prefix}_auth`", { result ->
                     allUsers.clear()
                     result.result().rows.forEach { row ->
-                        val user = User(row.getString("username"), row.getString("password"), PermissionManager.getRoleByName(row.getString("role")))
-                        allUsers.put(user.username, user)
+                        val user = User(row.getInteger("id"), row.getString("email"), row.getString("password"), row.getInteger("accountStatus"), row.getString("2fa"), PermissionManager.getRoleByName(row.getString("role")))
+                        allUsers.add(user)
                     }
                     val userCount = allUsers.size
                     logger.trace("User load complete, $userCount user(s) loaded")
@@ -64,15 +68,43 @@ object UserManager : AbstractDataService() {
         }
     }
 
-    fun hasUser(username: String): Boolean {
-        return allUsers.containsKey(username)
+    fun hasUser(email: String): Boolean {
+        return (allUsers.find { user ->
+            user.email.equals(email, ignoreCase = true)
+        }) != null
     }
 
-    fun getUserByUsername(username: String): User {
+    fun getUserByEmail(email: String): User {
         try {
-            return allUsers.get(username)!!
+            return (allUsers.find { user ->
+                user.email.equals(email, ignoreCase = true)
+            })!!
         } catch (e: Throwable) {
             throw IllegalArgumentException("requested User does not exist. Please check use hasUser(username) before requesting")
+        }
+    }
+
+    fun registerUser(email: String, password: String, name: String, handler: (result: AsyncResult<Boolean>) -> Any) {
+        dbClient!!.getConnection { conn ->
+            if (conn.succeeded()) {
+                conn.result().query("SELECT AUTO_INCREMENT as `value` FROM information_schema.TABLES WHERE TABLE_SCHEMA = `${DatabaseConfiguration.db_name}` AND TABLE_NAME = `${DatabaseConfiguration.db_prefix}_auth`", {
+                    ai ->
+                    val nextAiValue = ai.result().rows[0].getInteger("value")
+                    conn.result().updateWithParams("INSERT INTO `${DatabaseConfiguration.db_prefix}_auth` (`email`,`password`,`2fa`) VALUES (?,?,'')", JsonArray(arrayListOf(email, SHA.getSHA256String(password))), { insert ->
+                        if (insert.succeeded()) {
+                            conn.result().updateWithParams("INSERT INTO `${DatabaseConfiguration.db_prefix}_user_profile` (`id`,`name`) VALUES (?,?) ON DUPLICATE KEY UPDATE `name` = VALUES(`name`)", JsonArray(arrayListOf(nextAiValue, name)), { profile ->
+                                conn.result().close ()
+                                handler.invoke(Future.succeededFuture(true))
+                            })
+                        } else {
+                            handler.invoke(Future.failedFuture(insert.cause()))
+                            conn.result().close()
+                        }
+                    })
+                })
+            } else {
+                handler.invoke(Future.failedFuture(conn.cause()))
+            }
         }
     }
 

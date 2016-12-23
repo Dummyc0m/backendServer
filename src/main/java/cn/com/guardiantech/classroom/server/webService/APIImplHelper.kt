@@ -61,7 +61,7 @@ fun authHandler(router: Router, noAuthExceptions:Set<String>){
     router.post("/auth").handler { ctx ->
         if ((!Strings.isNullOrEmpty(ctx.request().getFormAttribute("username")) && (!Strings.isNullOrEmpty(ctx.request().getFormAttribute("password"))))) {
             if (UserManager.hasUser(ctx.request().getFormAttribute("username").toLowerCase())) {
-                val user = UserManager.getUserByUsername(ctx.request().getFormAttribute("username").toLowerCase())
+                val user = UserManager.getUserByEmail(ctx.request().getFormAttribute("username").toLowerCase())
                 if (user.authenticate(ctx.request().getFormAttribute("password"))) {
                     val hash = UserHash.createWebUser(user)
                     ctx.response().end(JsonObject().put("token", hash).toString())

@@ -39,7 +39,7 @@ class WebUser(val user: User) : io.vertx.ext.auth.User {
     }
 
     override fun principal(): JsonObject {
-        return JsonObject().put("username", this.user.username)
+        return JsonObject().put("email", this.user.email).put("id", this.user.id)
     }
 
     fun lastActiveInRange(timeRange: Long): Boolean {

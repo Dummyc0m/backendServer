@@ -29,7 +29,7 @@ object UserHash {
         val writer = PrintWriter(FileWriter(targetCacheFile))
         val dataArray = JsonArray()
         allUsers.forEach { entry ->
-            dataArray.add(JsonObject().put("key", entry.key).put("user", entry.value.user.username).put("lastActive", entry.value.lastActive))
+            dataArray.add(JsonObject().put("key", entry.key).put("user", entry.value.user.id).put("lastActive", entry.value.lastActive))
         }
         writer.println(JsonObject().put("cache", dataArray).toString())
         writer.close()
@@ -45,7 +45,7 @@ object UserHash {
                 val cachedData = JsonObject(dataString).getJsonArray("cache")
                 cachedData.forEach { item ->
                     if ((item as JsonObject).getString("user").isNotBlank() && UserManager.hasUser(item.getString("user"))) {
-                        allUsers.put(item .getString("key"), WebUser(UserManager.getUserByUsername(item.getString("user")), item.getLong("lastActive")))
+                        allUsers.put(item .getString("key"), WebUser(UserManager.getUserByEmail(item.getString("user")), item.getLong("lastActive")))
                     }
                 }
                 logger.trace("All (${allUsers.size}) user cache loaded")

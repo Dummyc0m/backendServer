@@ -38,7 +38,7 @@ object WebService {
     }
 
     private fun registerProviders() {
-        val reflections = Reflections("cn.codetector.todolist.server.webService.implementations")
+        val reflections = Reflections("cn.com.guardiantech.classroom.server.webService.implementations")
         val allAnnotatedClasses: Set<Class<*>> = reflections.getTypesAnnotatedWith(WebAPIImpl::class.java)
         allAnnotatedClasses.forEach {
             clazz ->
