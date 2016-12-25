@@ -13,7 +13,7 @@ import io.vertx.ext.web.Router
 
 @WebAPIImpl(prefix = "v1")
 class ToDoListWebAPIImpl : IWebAPIImpl {
-    private val noAuthExceptions: Set<String> = hashSetOf("/v1/auth", "/v1/register","/v1/magic/*")
+    private val noAuthExceptions: Set<String> = hashSetOf("/v1/auth", "/v1/register")
     private val logger = LoggerFactory.getLogger("APIv1")
 
     override fun initAPI(router: Router, sharedVertx: Vertx, dbClient: JDBCClient) {

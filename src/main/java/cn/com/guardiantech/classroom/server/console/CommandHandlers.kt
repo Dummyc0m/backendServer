@@ -4,6 +4,7 @@
 
 package cn.com.guardiantech.classroom.server.console
 
+import cn.codetector.util.StringUtil.StringFormatUtil
 import cn.com.guardiantech.classroom.server.Main
 import cn.com.guardiantech.classroom.server.console.consoleManager.Command
 import cn.com.guardiantech.classroom.server.data.DataService
@@ -93,6 +94,23 @@ object CommandHandlers {
                 "clear" -> {
                     UserHash.clearCache()
                     return true
+                }
+            }
+        }
+        return false
+    }
+
+    @Command(command = "mem")
+    fun memoryCommandHandler(args: Array<String>): Boolean {
+        if (args.size <= 1) {
+            val runtime = Runtime.getRuntime()
+            println("Free Memory: ${StringFormatUtil.byteSizeToString(runtime.freeMemory(), false)}, Total: ${StringFormatUtil.byteSizeToString(runtime.totalMemory(), false)}, (${StringFormatUtil.byteSizeToString(runtime.totalMemory() - runtime.freeMemory(), false)} used)")
+            return true
+        } else {
+            when (args[1]){
+                "gc" -> {
+                    Runtime.getRuntime().gc()
+                    return true;
                 }
             }
         }
