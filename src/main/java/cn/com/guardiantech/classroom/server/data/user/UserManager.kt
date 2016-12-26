@@ -91,7 +91,7 @@ object UserManager : AbstractDataService() {
     fun registerUser(email: String, password: String, name: String, handler: (result: AsyncResult<Boolean>) -> Any) {
         dbClient.getConnection { conn ->
             if (conn.succeeded()) {
-                conn.result().queryWithParams("SELECT count(*) as `count` FROM `${DatabaseConfiguration.db_prefix}_auth WHERE `email` = ? ", JsonArray().add(email), { countCheck ->
+                conn.result().queryWithParams("SELECT count(*) as `count` FROM `${DatabaseConfiguration.db_prefix}_auth` WHERE `email` = ? ", JsonArray().add(email), { countCheck ->
                     if (countCheck.succeeded()) {
                         logger.info(countCheck.result().results)
                         if (countCheck.result().results[0].getInteger(0) < 1) {
