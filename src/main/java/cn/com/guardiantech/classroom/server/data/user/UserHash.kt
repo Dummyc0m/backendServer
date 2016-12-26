@@ -9,6 +9,7 @@ import com.google.common.io.Files
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
+import org.json.simple.JSONObject
 import java.io.File
 import java.io.FileWriter
 import java.io.PrintWriter
@@ -29,7 +30,7 @@ object UserHash {
         val writer = PrintWriter(FileWriter(targetCacheFile))
         val dataArray = JsonArray()
         allUsers.forEach { entry ->
-            dataArray.add(JsonObject().put("key", entry.key).put("user", entry.value.user.id).put("lastActive", entry.value.lastActive))
+            dataArray.add(JsonObject().put("key", entry.key).put("user", JsonObject().put("id",entry.value.user.id).put("mfa",entry.value.mfaAuthed)).put("lastActive", entry.value.lastActive))
         }
         writer.println(JsonObject().put("cache", dataArray).toString())
         writer.close()
@@ -45,7 +46,8 @@ object UserHash {
                 val cachedData = JsonObject(dataString).getJsonArray("cache")
                 cachedData.forEach { item ->
                     if ((item as JsonObject).getValue("user") is Int) {
-                        allUsers.put(item .getString("key"), WebUser(UserManager.getUserById(item.getInteger("user")), item.getLong("lastActive")))
+                        val userObject = item.getJsonObject("user")
+                        allUsers.put(item .getString("key"), WebUser(UserManager.getUserById(userObject.getInteger("id")), item.getLong("lastActive"), userObject.getBoolean("mfa")))
                     }
                 }
                 logger.trace("All (${allUsers.size}) user cache loaded")

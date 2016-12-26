@@ -3,6 +3,7 @@ package cn.com.guardiantech.classroom.server.webService.implementations
 import cn.codetector.util.Validator.MD5
 import cn.codetector.util.Validator.SHA
 import cn.com.guardiantech.classroom.server.data.user.UserHash
+import cn.com.guardiantech.classroom.server.data.user.UserManager
 import cn.com.guardiantech.classroom.server.data.user.WebUser
 import cn.com.guardiantech.classroom.server.webService.*
 import io.vertx.core.Vertx
@@ -12,8 +13,8 @@ import io.vertx.ext.jdbc.JDBCClient
 import io.vertx.ext.web.Router
 
 @WebAPIImpl(prefix = "v1")
-class ToDoListWebAPIImpl : IWebAPIImpl {
-    private val noAuthExceptions: Set<String> = hashSetOf("/v1/auth", "/v1/register")
+class ClassroomWebImplV1 : IWebAPIImpl {
+    private val noAuthExceptions: Set<String> = hashSetOf("/v1/auth", "/v1/register", "/v1/mfa")
     private val logger = LoggerFactory.getLogger("APIv1")
 
     override fun initAPI(router: Router, sharedVertx: Vertx, dbClient: JDBCClient) {
@@ -38,6 +39,23 @@ class ToDoListWebAPIImpl : IWebAPIImpl {
                 } else {
                     ctx.response().setStatusCode(400).end(JsonObject().put("success", false).toString())
                 }
+            }
+        }
+
+        router.post("/register").handler { ctx ->
+            val form = ctx.request().formAttributes()
+            if (form.contains("email") and form.contains("fullName") and form.contains("password")) {
+                UserManager.registerUser(form.get("email"), form.get("password"), form.get("fullName"), {
+                    result ->
+                    if (result.succeeded()) {
+                        ctx.response().end(JsonObject().put("registerSuccess",result.result()).toString())
+                    } else {
+                        ctx.fail(500)
+                        logger.warn(result.cause())
+                    }
+                })
+            } else {
+                ctx.fail(400)
             }
         }
 

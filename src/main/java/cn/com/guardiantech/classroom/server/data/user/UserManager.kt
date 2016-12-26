@@ -89,7 +89,7 @@ object UserManager : AbstractDataService() {
     }
 
     fun registerUser(email: String, password: String, name: String, handler: (result: AsyncResult<Boolean>) -> Any) {
-        dbClient!!.getConnection { conn ->
+        dbClient.getConnection { conn ->
             if (conn.succeeded()) {
                 conn.result().query("SELECT AUTO_INCREMENT as `value` FROM information_schema.TABLES WHERE TABLE_SCHEMA = `${DatabaseConfiguration.db_name}` AND TABLE_NAME = `${DatabaseConfiguration.db_prefix}_auth`", {
                     ai ->
@@ -98,7 +98,6 @@ object UserManager : AbstractDataService() {
                         if (insert.succeeded()) {
                             conn.result().updateWithParams("INSERT INTO `${DatabaseConfiguration.db_prefix}_user_profile` (`id`,`name`) VALUES (?,?) ON DUPLICATE KEY UPDATE `name` = VALUES(`name`)", JsonArray(arrayListOf(nextAiValue, name)), { profile ->
                                 conn.result().close ()
-                                handler.invoke(Future.succeededFuture(true))
                                 if (profile.succeeded()){
                                     this.allUsers.add(User(nextAiValue,email,SHA.getSHA256String(password), defaultUserStatus, "", PermissionManager.getRoleByName("user")))
                                     markChange()
@@ -107,6 +106,7 @@ object UserManager : AbstractDataService() {
                                         loadFromDatabase()
                                     }
                                 }
+                                handler.invoke(Future.succeededFuture(true))
                             })
                         } else {
                             handler.invoke(Future.failedFuture(insert.cause()))

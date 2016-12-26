@@ -16,13 +16,22 @@ import io.vertx.ext.auth.AuthProvider
 class WebUser(val user: User) : io.vertx.ext.auth.User {
     var lastActive = System.currentTimeMillis()
         private set
+    var mfaAuthed = false
 
     constructor(user: User, lastActive: Long) : this(user) {
         this.lastActive = lastActive
     }
 
+    constructor(user: User, mfa:Boolean) : this(user) {
+        this.mfaAuthed = mfa
+    }
+
+    constructor(user: User, lastActive: Long, mfa: Boolean) : this(user, lastActive) {
+        this.mfaAuthed = mfa
+    }
+
     override fun isAuthorised(authority: String?, resultHandler: Handler<AsyncResult<Boolean>>?): io.vertx.ext.auth.User {
-        resultHandler!!.handle(Future.succeededFuture(user.hasPermission(authority!!)))
+        resultHandler!!.handle(Future.succeededFuture(mfaAuthed && user.hasPermission(authority!!)))
         return this
     }
 
