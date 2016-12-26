@@ -91,28 +91,47 @@ object UserManager : AbstractDataService() {
     fun registerUser(email: String, password: String, name: String, handler: (result: AsyncResult<Boolean>) -> Any) {
         dbClient.getConnection { conn ->
             if (conn.succeeded()) {
-                conn.result().query("SELECT AUTO_INCREMENT as `value` FROM information_schema.TABLES WHERE TABLE_SCHEMA = `${DatabaseConfiguration.db_name}` AND TABLE_NAME = `${DatabaseConfiguration.db_prefix}_auth`", {
-                    ai ->
-                    val nextAiValue = ai.result().rows[0].getInteger("value")
-                    conn.result().updateWithParams("INSERT INTO `${DatabaseConfiguration.db_prefix}_auth` (`email`,`password`,`2fa`, userStatus) VALUES (?,?,'',?)", JsonArray(arrayListOf(email, SHA.getSHA256String(password), defaultUserStatus)), { insert ->
-                        if (insert.succeeded()) {
-                            conn.result().updateWithParams("INSERT INTO `${DatabaseConfiguration.db_prefix}_user_profile` (`id`,`name`) VALUES (?,?) ON DUPLICATE KEY UPDATE `name` = VALUES(`name`)", JsonArray(arrayListOf(nextAiValue, name)), { profile ->
-                                conn.result().close ()
-                                if (profile.succeeded()){
-                                    this.allUsers.add(User(nextAiValue,email,SHA.getSHA256String(password), defaultUserStatus, "", PermissionManager.getRoleByName("user")))
-                                    markChange()
-                                }else{
-                                    saveToDatabase {
-                                        loadFromDatabase()
-                                    }
+                conn.result().queryWithParams("SELECT count(*) as `count` FROM `${DatabaseConfiguration.db_prefix}_auth WHERE `email` = ?", JsonArray().add(email), { countCheck ->
+                    if (countCheck.succeeded()) {
+                        logger.info(countCheck.result().results)
+                        if (countCheck.result().results[0].getInteger(0) < 1) {
+                            conn.result().queryWithParams("SELECT AUTO_INCREMENT as `value` FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?", JsonArray(arrayListOf(DatabaseConfiguration.db_name,"${DatabaseConfiguration.db_prefix}_auth")), {
+                                ai ->
+                                if (ai.succeeded()) {
+                                    val nextAiValue = ai.result().rows[0].getInteger("value")
+                                    conn.result().updateWithParams("INSERT INTO `${DatabaseConfiguration.db_prefix}_auth` (`email`,`password`,`2fa`, accountStatus) VALUES (?,?,'',?)", JsonArray(arrayListOf(email, SHA.getSHA256String(password), defaultUserStatus)), { insert ->
+                                        if (insert.succeeded()) {
+                                            logger.info("Register with ID ${nextAiValue}")
+                                            conn.result().updateWithParams("INSERT INTO `${DatabaseConfiguration.db_prefix}_user_profile` (`id`,`name`) VALUES (?,?) ON DUPLICATE KEY UPDATE `name` = VALUES(`name`)", JsonArray(arrayListOf(nextAiValue, name)), { profile ->
+                                                if (profile.succeeded()) {
+                                                    this.allUsers.add(User(nextAiValue, email, SHA.getSHA256String(password), defaultUserStatus, "", PermissionManager.getRoleByName("user")))
+                                                    markChange()
+                                                } else {
+                                                    saveToDatabase {
+                                                        loadFromDatabase()
+                                                    }
+                                                }
+                                                conn.result().close()
+                                                handler.invoke(Future.succeededFuture(true))
+                                            })
+                                        } else {
+                                            handler.invoke(Future.failedFuture(insert.cause()))
+                                            conn.result().close()
+                                        }
+                                    })
+                                } else {
+                                    handler.invoke(Future.failedFuture(ai.cause()))
+                                    conn.result().close()
                                 }
-                                handler.invoke(Future.succeededFuture(true))
                             })
                         } else {
-                            handler.invoke(Future.failedFuture(insert.cause()))
                             conn.result().close()
+                            handler.invoke(Future.succeededFuture(false))
                         }
-                    })
+                    } else {
+                        conn.result().close ()
+                        handler.invoke(Future.failedFuture(conn.cause()))
+                    }
                 })
             } else {
                 handler.invoke(Future.failedFuture(conn.cause()))

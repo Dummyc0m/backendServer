@@ -22,9 +22,9 @@ class ClassroomWebImplV1 : IWebAPIImpl {
         router.exceptionHandler { e ->
             logger.error("Error in Route", e)
         }
+        multipartPostHandler(router)
         ajaxXSiteHandler(router)
         preflightRouteHandler(router)
-        multipartPostHandler(router)
         authHandler(router, noAuthExceptions)
 
         router.route("/auth/verify").handler { ctx ->
