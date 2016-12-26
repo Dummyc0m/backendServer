@@ -91,7 +91,7 @@ object UserManager : AbstractDataService() {
     fun registerUser(email: String, password: String, name: String, handler: (result: AsyncResult<Boolean>) -> Any) {
         dbClient.getConnection { conn ->
             if (conn.succeeded()) {
-                conn.result().queryWithParams("SELECT count(*) as `count` FROM `${DatabaseConfiguration.db_prefix}_auth WHERE `email` = ?", JsonArray().add(email), { countCheck ->
+                conn.result().queryWithParams("SELECT count(*) as `count` FROM `${DatabaseConfiguration.db_prefix}_auth WHERE `email` = ? ", JsonArray().add(email), { countCheck ->
                     if (countCheck.succeeded()) {
                         logger.info(countCheck.result().results)
                         if (countCheck.result().results[0].getInteger(0) < 1) {
@@ -99,8 +99,7 @@ object UserManager : AbstractDataService() {
                                 ai ->
                                 if (ai.succeeded()) {
                                     val nextAiValue = ai.result().rows[0].getInteger("value")
-                                    conn.result().updateWithParams("INSERT INTO `${DatabaseConfiguration.db_prefix}_auth` (`email`,`password`,`2fa`, accountStatus) VALUES (?,?,'',?)", JsonArray(arrayListOf(email, SHA.getSHA256String(password), defaultUserStatus)), { insert ->
-                                        if (insert.succeeded()) {
+                                    conn.result().updateWithParams("INSERT INTO `${DatabaseConfiguration.db_prefix}_auth` (`email`,`password`,`2fa`, accountStatus) VALUES (?,?,'',?)", JsonArray(arrayListOf(email, SHA.getSHA256String(password), defaultUserStatus)), { insert ->                                        if (insert.succeeded()) {
                                             logger.info("Register with ID ${nextAiValue}")
                                             conn.result().updateWithParams("INSERT INTO `${DatabaseConfiguration.db_prefix}_user_profile` (`id`,`name`) VALUES (?,?) ON DUPLICATE KEY UPDATE `name` = VALUES(`name`)", JsonArray(arrayListOf(nextAiValue, name)), { profile ->
                                                 if (profile.succeeded()) {
@@ -130,7 +129,7 @@ object UserManager : AbstractDataService() {
                         }
                     } else {
                         conn.result().close ()
-                        handler.invoke(Future.failedFuture(conn.cause()))
+                        handler.invoke(Future.failedFuture(countCheck.cause()))
                     }
                 })
             } else {
