@@ -8,6 +8,7 @@ import cn.codetector.util.StringUtil.StringFormatUtil
 import cn.com.guardiantech.classroom.server.Main
 import cn.com.guardiantech.classroom.server.console.consoleManager.Command
 import cn.com.guardiantech.classroom.server.data.DataService
+import cn.com.guardiantech.classroom.server.data.multifactorauthentication.MFAUtil
 import cn.com.guardiantech.classroom.server.data.permission.PermissionManager
 import cn.com.guardiantech.classroom.server.data.user.UserHash
 import cn.com.guardiantech.classroom.server.webService.WebService
@@ -94,6 +95,19 @@ object CommandHandlers {
                 "clear" -> {
                     UserHash.clearCache()
                     return true
+                }
+            }
+        }
+        return false
+    }
+
+    @Command(command = "mfa")
+    fun mfaCommandHandler(args: Array<String>): Boolean {
+        if (args.size > 1) {
+            when (args[1]){
+                "gen" -> {
+                    println(MFAUtil.generateBase32Secret())
+                    return true;
                 }
             }
         }

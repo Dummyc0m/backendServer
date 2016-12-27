@@ -31,6 +31,25 @@ class ClassroomWebImplV1 : IWebAPIImpl {
             ctx.response().end(JsonObject().put("isMfaAuthed", (ctx.user() as WebUser).mfaAuthed).put("userinfo",ctx.user().principal()).toString())
         }
 
+        router.post("/auth/mfa").handler { ctx ->
+            val form = ctx.request().formAttributes()
+            val user = ctx.user() as WebUser
+            if (!user.mfaAuthed && user.user.hasMFA()){
+                if (form.contains("code")){
+                    val validationResult = user.user.verifyMFA(form.get("code"))
+                    if (validationResult) {
+                        user.mfaAuthed = true
+                    }
+                    ctx.response().end(JsonObject().put("mfaResult",validationResult).toString())
+                } else {
+                    ctx.fail(400)
+                }
+            } else {
+                user.mfaAuthed = true
+                ctx.response().end(JsonObject().put("mfaResult",user.mfaAuthed).toString())
+            }
+        }
+
         router.post("/auth/changepassword").handler { ctx ->
             val form = ctx.request().formAttributes()
             if (form.get("oldpass").isNotBlank() && form.get("newpass").isNotBlank()) {
