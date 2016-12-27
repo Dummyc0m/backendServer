@@ -30,6 +30,11 @@ class WebUser(val user: User) : io.vertx.ext.auth.User {
         this.mfaAuthed = mfa
     }
 
+    init {
+        if (!this.user.hasMFA()){
+            this.mfaAuthed = true
+        }
+    }
     override fun isAuthorised(authority: String?, resultHandler: Handler<AsyncResult<Boolean>>?): io.vertx.ext.auth.User {
         resultHandler!!.handle(Future.succeededFuture(mfaAuthed && user.hasPermission(authority!!)))
         return this
