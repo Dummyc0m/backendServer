@@ -3,6 +3,7 @@ package cn.com.guardiantech.classroom.server.data.avatar
 import cn.codetector.util.Configuration.ConfigurationManager
 import cn.com.guardiantech.classroom.server.Main
 import cn.com.guardiantech.classroom.server.data.AbstractDataService
+import cn.com.guardiantech.classroom.server.data.configuration.DatabaseConfiguration
 import cn.com.guardiantech.classroom.server.data.user.User
 import com.google.common.primitives.Longs
 import io.vertx.core.AsyncResult
@@ -30,6 +31,7 @@ object AvatarManager : AbstractDataService() {
     private val avatarDirectory = File("./${avatarConfiguration.getStringValue("avatarDir", "avatar")}/")
 
     private val localFileList : MutableList<String> = ArrayList<String>()
+    private val userAvatarMatch : MutableMap<Int, String> = HashMap<Int, String>()
 
     override fun initialize() {
         logger.info("Initializing Avatar Manager")
@@ -43,14 +45,26 @@ object AvatarManager : AbstractDataService() {
         if (!avatarDirectory.exists()) {
             logger.info("Avatar directory created : ${avatarDirectory.name}")
             avatarDirectory.mkdir()
-
+        }
+        dbClient!!.getConnection { con ->
+            if (con.succeeded()){
+                con.result().query("SELECT * FROM `${DatabaseConfiguration.db_prefix}_avatar`", { q ->
+                    if (q.succeeded()){
+                        userAvatarMatch.clear()
+                        q.result().rows.forEach { row ->
+                            userAvatarMatch.put(row.getInteger("uesr"), row.getString("fileName"))
+                        }
+                    }
+                    con.result().close()
+                })
+            }
         }
     }
 
     fun getAvatarForUser(user: User, handler: (AsyncResult<Buffer>) -> Any) {
         dbClient!!.getConnection { con ->
             if (con.succeeded()) {
-//                con.result().queryWithParams("")
+
             } else {
                 handler.invoke(Future.failedFuture(con.cause()))
             }

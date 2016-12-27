@@ -28,7 +28,7 @@ class ClassroomWebImplV1 : IWebAPIImpl {
         authHandler(router, noAuthExceptions)
 
         router.route("/auth/verify").handler { ctx ->
-            ctx.response().end(ctx.user().principal().toString())
+            ctx.response().end(JsonObject().put("isMfaAuthed", (ctx.user() as WebUser).mfaAuthed).put("userinfo",ctx.user().principal()).toString())
         }
 
         router.post("/auth/changepassword").handler { ctx ->

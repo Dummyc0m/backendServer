@@ -70,7 +70,7 @@ fun authHandler(router: Router, noAuthExceptions: Set<String>) {
                 val user = UserManager.getUserByEmail(ctx.request().getFormAttribute("username").toLowerCase())
                 if (user.authenticate(ctx.request().getFormAttribute("password"))) {
                     val hash = UserHash.createWebUser(user)
-                    ctx.response().end(JsonObject().put("token", hash).put("mfa", user.hasMFA()).toString())
+                    ctx.response().end(JsonObject().put("token", hash).put("requireMFA", user.hasMFA()).toString())
                 } else {
                     ctx.fail(401)
                 }

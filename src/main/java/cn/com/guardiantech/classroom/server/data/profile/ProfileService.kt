@@ -1,6 +1,7 @@
 package cn.com.guardiantech.classroom.server.data.profile
 
 import cn.com.guardiantech.classroom.server.data.AbstractDataService
+import cn.com.guardiantech.classroom.server.data.user.User
 import io.vertx.core.logging.LoggerFactory
 
 object ProfileService : AbstractDataService(){
@@ -16,5 +17,13 @@ object ProfileService : AbstractDataService(){
 
     override fun loadFromDatabase(action: () -> Unit) {
         
+    }
+
+    fun fetchUserProfile (user: User) {
+        dbClient.getConnection { con ->
+            if (con.succeeded()) {
+
+            }
+        }
     }
 }

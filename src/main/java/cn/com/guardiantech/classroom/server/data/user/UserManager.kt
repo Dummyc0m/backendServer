@@ -28,7 +28,7 @@ object UserManager : AbstractDataService() {
             logger.trace("Saving users to configuration...")
             val users: MutableList<JsonArray> = ArrayList()
             this.allUsers.forEach { user ->
-                users.add(JsonArray().add(user.id).add(user.email).add(user.passwordHash).add(user.accountStatus).add(user.accountStatus).add(user.role.name))
+                users.add(JsonArray().add(user.id).add(user.email).add(user.passwordHash).add(user.accountStatus).add(user.mfa).add(user.role.name))
             }
             if (conn.succeeded()) {
                 conn.result().batchWithParams("INSERT INTO `${DatabaseConfiguration.db_prefix}_auth` (`id`, `email`,`password`,`accountStatus`,`2fa`,`role`) VALUES (?,?,?,?,?,?) ON DUPLICATE KEY UPDATE `password` = VALUES(`password`),`email` = VALUES(`email`),`accountStatus` = VALUES(`accountStatus`),`2fa` = VALUES(`2fa`), `role` = VALUES(`role`)", users, {
@@ -52,7 +52,7 @@ object UserManager : AbstractDataService() {
 
     override fun loadFromDatabase(action: () -> Unit) {
         assert(isInitialized())
-        dbClient!!.getConnection { conn ->
+        dbClient.getConnection { conn ->
             logger.trace("Loading Users from Database...")
             if (conn.succeeded()) {
                 conn.result().query("SELECT * FROM `${DatabaseConfiguration.db_prefix}_auth`", { result ->
@@ -99,13 +99,15 @@ object UserManager : AbstractDataService() {
                                 ai ->
                                 if (ai.succeeded()) {
                                     val nextAiValue = ai.result().rows[0].getInteger("value")
-                                    conn.result().updateWithParams("INSERT INTO `${DatabaseConfiguration.db_prefix}_auth` (`email`,`password`,`2fa`, accountStatus) VALUES (?,?,'',?)", JsonArray(arrayListOf(email, SHA.getSHA256String(password), defaultUserStatus)), { insert ->                                        if (insert.succeeded()) {
+                                    conn.result().updateWithParams("INSERT INTO `${DatabaseConfiguration.db_prefix}_auth` (`email`,`password`,`2fa`, accountStatus) VALUES (?,?,'',?)", JsonArray(arrayListOf(email, SHA.getSHA256String(password), defaultUserStatus)), { insert ->
+                                        if (insert.succeeded()) {
                                             logger.info("Register with ID ${nextAiValue}")
-                                            conn.result().updateWithParams("INSERT INTO `${DatabaseConfiguration.db_prefix}_user_profile` (`id`,`name`) VALUES (?,?) ON DUPLICATE KEY UPDATE `name` = VALUES(`name`)", JsonArray(arrayListOf(nextAiValue, name)), { profile ->
+                                            conn.result().updateWithParams("INSERT INTO `${DatabaseConfiguration.db_prefix}_user_profile` (`uid`,`name`) VALUES (?,?) ON DUPLICATE KEY UPDATE `name` = VALUES(`name`)", JsonArray(arrayListOf(nextAiValue, name)), { profile ->
                                                 if (profile.succeeded()) {
                                                     this.allUsers.add(User(nextAiValue, email, SHA.getSHA256String(password), defaultUserStatus, "", PermissionManager.getRoleByName("user")))
                                                     markChange()
                                                 } else {
+                                                    logger.warn(profile.cause())
                                                     saveToDatabase {
                                                         loadFromDatabase()
                                                     }
