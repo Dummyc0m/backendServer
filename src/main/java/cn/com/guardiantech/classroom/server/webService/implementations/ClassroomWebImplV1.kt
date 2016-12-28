@@ -2,6 +2,8 @@ package cn.com.guardiantech.classroom.server.webService.implementations
 
 import cn.codetector.util.Validator.MD5
 import cn.codetector.util.Validator.SHA
+import cn.com.guardiantech.classroom.server.data.security.authlog.AuthLogService
+import cn.com.guardiantech.classroom.server.data.security.authlog.UserActivityLogType
 import cn.com.guardiantech.classroom.server.data.user.UserHash
 import cn.com.guardiantech.classroom.server.data.user.UserManager
 import cn.com.guardiantech.classroom.server.data.user.WebUser
@@ -27,10 +29,10 @@ class ClassroomWebImplV1 : IWebAPIImpl {
         preflightRouteHandler(router)
         authHandler(router, noAuthExceptions)
 
+        //Auth & Register
         router.route("/auth/verify").handler { ctx ->
             ctx.response().end(JsonObject().put("isMfaAuthed", (ctx.user() as WebUser).mfaAuthed).put("userinfo",ctx.user().principal()).toString())
         }
-
         router.post("/auth/mfa").handler { ctx ->
             val form = ctx.request().formAttributes()
             val user = ctx.user() as WebUser
@@ -39,6 +41,7 @@ class ClassroomWebImplV1 : IWebAPIImpl {
                     val validationResult = user.user.verifyMFA(form.get("code"))
                     if (validationResult) {
                         user.mfaAuthed = true
+                        AuthLogService.logUserActivity(user.user, ctx.request().remoteAddress().host(), UserActivityLogType.MULTI_FACTOR_AUTHENTICATION)
                     }
                     ctx.response().end(JsonObject().put("mfaResult",validationResult).toString())
                 } else {
@@ -49,7 +52,6 @@ class ClassroomWebImplV1 : IWebAPIImpl {
                 ctx.response().end(JsonObject().put("mfaResult",user.mfaAuthed).toString())
             }
         }
-
         router.post("/auth/changepassword").handler { ctx ->
             val form = ctx.request().formAttributes()
             if (form.get("oldpass").isNotBlank() && form.get("newpass").isNotBlank()) {
@@ -60,7 +62,6 @@ class ClassroomWebImplV1 : IWebAPIImpl {
                 }
             }
         }
-
         router.post("/register").handler { ctx ->
             val form = ctx.request().formAttributes()
             if (form.contains("email") and form.contains("fullName") and form.contains("password")) {
@@ -77,19 +78,11 @@ class ClassroomWebImplV1 : IWebAPIImpl {
                 ctx.fail(400)
             }
         }
-
         router.route("/auth/signOut").handler { ctx ->
             UserHash.revokeToken(ctx.request().getHeader("Authorization"))
             ctx.response().end()
         }
 
-//        router.post("/todo/add").handler { ctx ->
-//            val post = ctx.request().formAttributes()
-//            if (strNotEmpty(ctx.get("title")))
-//        }
-        //TODO delete
-        router.get("/magic/:pass").handler { ctx ->
-            ctx.response().end(SHA.getSHA256String(MD5.getMD5String(ctx.pathParam("pass"))))
-        }
+        router.get()
     }
 }

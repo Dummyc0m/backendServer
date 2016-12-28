@@ -1,5 +1,8 @@
 package cn.com.guardiantech.classroom.server.webService
 
+import cn.com.guardiantech.classroom.server.data.security.authlog.AuthLogService
+import cn.com.guardiantech.classroom.server.data.security.authlog.UserActivityLogType
+import cn.com.guardiantech.classroom.server.data.security.ipLoaction.IPLocationService
 import cn.com.guardiantech.classroom.server.data.user.UserHash
 import cn.com.guardiantech.classroom.server.data.user.UserManager
 import cn.com.guardiantech.classroom.server.data.user.WebUser
@@ -70,6 +73,9 @@ fun authHandler(router: Router, noAuthExceptions: Set<String>) {
                 val user = UserManager.getUserByEmail(ctx.request().getFormAttribute("username").toLowerCase())
                 if (user.authenticate(ctx.request().getFormAttribute("password"))) {
                     val hash = UserHash.createWebUser(user)
+                    val userIP = ctx.request().remoteAddress().host()
+                    IPLocationService.getLocation(userIP, {})
+                    AuthLogService.logUserActivity(user, userIP, UserActivityLogType.AUTHENTICATION)
                     ctx.response().end(JsonObject().put("token", hash).put("requireMFA", user.hasMFA()).toString())
                 } else {
                     ctx.fail(401)

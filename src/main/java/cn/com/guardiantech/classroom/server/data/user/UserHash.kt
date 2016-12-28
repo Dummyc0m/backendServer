@@ -45,7 +45,7 @@ object UserHash {
             if (dataString.isNotBlank()) {
                 val cachedData = JsonObject(dataString).getJsonArray("cache")
                 cachedData.forEach { item ->
-                    if ((item as JsonObject).getValue("user") is Int) {
+                    if ((item as JsonObject).getValue("user") is JsonObject) {
                         val userObject = item.getJsonObject("user")
                         allUsers.put(item .getString("key"), WebUser(UserManager.getUserById(userObject.getInteger("id")), item.getLong("lastActive"), userObject.getBoolean("mfa")))
                     }

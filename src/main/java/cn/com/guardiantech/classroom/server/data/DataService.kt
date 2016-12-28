@@ -9,6 +9,8 @@ import cn.com.guardiantech.classroom.server.data.avatar.AvatarManager
 import cn.com.guardiantech.classroom.server.data.course.CourseService
 import cn.com.guardiantech.classroom.server.data.permission.PermissionManager
 import cn.com.guardiantech.classroom.server.data.profile.ProfileService
+import cn.com.guardiantech.classroom.server.data.security.authlog.AuthLogService
+import cn.com.guardiantech.classroom.server.data.security.ipLoaction.IPLocationService
 import cn.com.guardiantech.classroom.server.data.user.UserHash
 import cn.com.guardiantech.classroom.server.data.user.UserManager
 import io.vertx.core.logging.LoggerFactory
@@ -31,6 +33,8 @@ object DataService {
         AvatarManager.setDBClient(Main.sharedJDBCClient)
         ProfileService.setDBClient(Main.sharedJDBCClient)
         CourseService.setDBClient(Main.sharedJDBCClient)
+        IPLocationService.setDBClient(Main.sharedJDBCClient)
+        AuthLogService.setDBClient(Main.sharedJDBCClient)
 
         // Register Tickers
         executors.submit(DataServiceTicker(5000, {
@@ -40,6 +44,8 @@ object DataService {
             AvatarManager.tick()
             ProfileService.tick()
             CourseService.tick()
+            AuthLogService.tick()
+            IPLocationService.tick()
         }))
         load()
     }

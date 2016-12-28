@@ -30,7 +30,11 @@ class User(val id: Int, var email: String, var passwordHash: String, var account
     }
 
     fun verifyMFA(code: String): Boolean {
-        return MFAUtil.generateCurrentNumber(mfa).equals(code, ignoreCase = true)
+        if (MFAUtil.generateCurrentNumber(mfa).equals(code, ignoreCase = true)) {
+            return true
+        } else {
+            return MFAUtil.generateCurrentNumber(mfa, System.currentTimeMillis() - MFAUtil.DEFAULT_TIME_STEP_SECONDS * 1000, MFAUtil.DEFAULT_TIME_STEP_SECONDS).equals(code, ignoreCase = true)
+        }
     }
 
     fun updatePassword(oldPass: String, newPass: String): Boolean {
