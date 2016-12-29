@@ -31,25 +31,45 @@ class ClassroomWebImplV1 : IWebAPIImpl {
 
         //Auth & Register
         router.route("/auth/verify").handler { ctx ->
-            ctx.response().end(JsonObject().put("isMfaAuthed", (ctx.user() as WebUser).mfaAuthed).put("userinfo",ctx.user().principal()).toString())
+            ctx.response().end(JsonObject().put("isMfaAuthed", (ctx.user() as WebUser).mfaAuthed).put("userinfo", ctx.user().principal()).toString())
         }
         router.post("/auth/mfa").handler { ctx ->
             val form = ctx.request().formAttributes()
             val user = ctx.user() as WebUser
-            if (!user.mfaAuthed && user.user.hasMFA()){
-                if (form.contains("code")){
+            if (!user.mfaAuthed && user.user.hasMFA()) {
+                if (form.contains("code")) {
                     val validationResult = user.user.verifyMFA(form.get("code"))
                     if (validationResult) {
                         user.mfaAuthed = true
-                        AuthLogService.logUserActivity(user.user, ctx.request().remoteAddress().host(), UserActivityLogType.MULTI_FACTOR_AUTHENTICATION)
+                        AuthLogService.logUserActivity(user.user, ctx.request().remoteAddress().host(), UserActivityLogType.MULTI_FACTOR_AUTHENTICATION, ctx.request().getHeader("User-Agent"))
                     }
-                    ctx.response().end(JsonObject().put("mfaResult",validationResult).toString())
+                    ctx.response().end(JsonObject().put("mfaResult", validationResult).toString())
                 } else {
                     ctx.fail(400)
                 }
             } else {
                 user.mfaAuthed = true
-                ctx.response().end(JsonObject().put("mfaResult",user.mfaAuthed).toString())
+                ctx.response().end(JsonObject().put("mfaResult", user.mfaAuthed).toString())
+            }
+        }
+        router.get("/auth/setupmfa").handler { ctx ->
+            val user = ctx.user() as WebUser
+            if (!user.user.hasMFA()) {
+                ctx.response().end(JsonObject().put("secret", user.user.generateMFAToken()).toString())
+            } else {
+                ctx.fail(400)
+            }
+        }
+        router.post("/auth/removemfa").handler { ctx ->
+            val user = ctx.user() as WebUser
+            if (ctx.request().formAttributes().contains("code")) {
+                val authSuccess = user.user.verifyMFA(ctx.request().getFormAttribute("code"))
+                if (authSuccess) {
+                    user.user.disableMFA()
+                }
+                ctx.response().end(JsonObject().put("success",authSuccess).toString())
+            } else {
+                ctx.fail(400)
             }
         }
         router.post("/auth/changepassword").handler { ctx ->
@@ -68,7 +88,7 @@ class ClassroomWebImplV1 : IWebAPIImpl {
                 UserManager.registerUser(form.get("email"), form.get("password"), form.get("fullName"), {
                     result ->
                     if (result.succeeded()) {
-                        ctx.response().end(JsonObject().put("registerSuccess",result.result()).toString())
+                        ctx.response().end(JsonObject().put("registerSuccess", result.result()).toString())
                     } else {
                         ctx.fail(500)
                         logger.warn(result.cause())
@@ -83,6 +103,14 @@ class ClassroomWebImplV1 : IWebAPIImpl {
             ctx.response().end()
         }
 
-        router.get()
+        router.get("/usercenter/authlog").handler { ctx ->
+            val user = (ctx.user() as WebUser).user
+            AuthLogService.fetchUserActivity(user, UserActivityLogType.AUTHENTICATION, { result ->
+                ctx.response().end(result.toString())
+            })
+        }
+        router.get("/usercenter/mfaStatus").handler { ctx ->
+            ctx.response().end(JsonObject().put("mfaEnabled",(ctx.user() as WebUser).user.hasMFA()).toString())
+        }
     }
 }

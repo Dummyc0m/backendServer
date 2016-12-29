@@ -59,7 +59,9 @@ fun authHandler(router: Router, noAuthExceptions: Set<String>) {
             val auth = ctx.request().getHeader("Authorization")
             if (auth != null && UserHash.isAuthKeyValid(auth)) {
                 ctx.setUser(UserHash.getUserByAuthKey(auth))
-                (ctx.user() as WebUser).renewSession()
+                if ((ctx.user() as WebUser).mfaAuthed) {
+                    (ctx.user() as WebUser).renewSession()
+                }
                 ctx.next()
             } else {
                 ctx.response().setStatusCode(401).end(JsonObject().put("error", "Invalid Token").toString())
@@ -75,7 +77,7 @@ fun authHandler(router: Router, noAuthExceptions: Set<String>) {
                     val hash = UserHash.createWebUser(user)
                     val userIP = ctx.request().remoteAddress().host()
                     IPLocationService.getLocation(userIP, {})
-                    AuthLogService.logUserActivity(user, userIP, UserActivityLogType.AUTHENTICATION)
+                    AuthLogService.logUserActivity(user, userIP, UserActivityLogType.AUTHENTICATION, ctx.request().getHeader("User-Agent"))
                     ctx.response().end(JsonObject().put("token", hash).put("requireMFA", user.hasMFA()).toString())
                 } else {
                     ctx.fail(401)
