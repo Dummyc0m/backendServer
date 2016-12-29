@@ -9,7 +9,7 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <kotlin.version>1.0.5-3</kotlin.version>
+        <kotlin.version>1.0.6</kotlin.version>
         <vertex.version>3.3.3</vertex.version>
         <mainClass>cn.com.guardiantech.classroom.server.MainKt</mainClass>
         <junit.jupiter.version>5.0.0-M2</junit.jupiter.version>
