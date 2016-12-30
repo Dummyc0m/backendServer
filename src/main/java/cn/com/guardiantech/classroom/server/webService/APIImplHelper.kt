@@ -34,7 +34,9 @@ fun ajaxXSiteHandler(router: Router) {
         } else {
             500
         }).putHeader("Access-Control-Allow-Origin", "*").end()
-        ctx.failure().printStackTrace()
+        if (ctx.failure() != null && ctx.failure() is Throwable) {
+            ctx.failure().printStackTrace()
+        }
     }
 
 }
@@ -77,7 +79,7 @@ fun authHandler(router: Router, noAuthExceptions: Set<String>) {
                     val hash = UserHash.createWebUser(user)
                     val userIP = ctx.request().remoteAddress().host()
                     IPLocationService.getLocation(userIP, {})
-                    AuthLogService.logUserActivity(user, userIP, UserActivityLogType.AUTHENTICATION, ctx.request().getHeader("User-Agent"))
+                    AuthLogService.logUserActivity(user, userIP, UserActivityLogType.AUTHENTICATION, Strings.nullToEmpty(ctx.request().getHeader("User-Agent")))
                     ctx.response().end(JsonObject().put("token", hash).put("requireMFA", user.hasMFA()).toString())
                 } else {
                     ctx.fail(401)

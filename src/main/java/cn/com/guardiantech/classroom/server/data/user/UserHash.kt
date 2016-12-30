@@ -66,8 +66,12 @@ object UserHash {
             uniqueId = UUID.randomUUID().toString()
         }
         allUsers.put(uniqueId, WebUser(user))
-        changed = true
+        markChange()
         return uniqueId
+    }
+    
+    fun markChange () {
+        changed = true
     }
 
     fun isAuthKeyValid(key: String): Boolean {
@@ -89,7 +93,7 @@ object UserHash {
         }
         if (count > 0) {
             logger.trace("$count timed out user(s) removed")
-            changed = true
+            markChange()
         }
     }
 
@@ -108,7 +112,7 @@ object UserHash {
     fun revokeToken(token: String){
         if (allUsers.containsKey(token)){
             allUsers.remove(token)
-            changed = true
+            markChange()
         }
     }
 }

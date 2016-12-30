@@ -17,6 +17,10 @@ class WebUser(val user: User) : io.vertx.ext.auth.User {
     var lastActive = System.currentTimeMillis()
         private set
     var mfaAuthed = false
+        set(value) {
+            field = value
+            UserHash.markChange()
+        }
 
     constructor(user: User, lastActive: Long) : this(user) {
         this.lastActive = lastActive

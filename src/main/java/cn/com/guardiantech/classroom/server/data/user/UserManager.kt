@@ -101,7 +101,6 @@ object UserManager : AbstractDataService() {
                                     val nextAiValue = ai.result().rows[0].getInteger("value")
                                     conn.result().updateWithParams("INSERT INTO `${DatabaseConfiguration.db_prefix}_auth` (`email`,`password`,`2fa`, accountStatus) VALUES (?,?,'',?)", JsonArray(arrayListOf(email, SHA.getSHA256String(password), defaultUserStatus)), { insert ->
                                         if (insert.succeeded()) {
-                                            logger.info("Register with ID ${nextAiValue}")
                                             conn.result().updateWithParams("INSERT INTO `${DatabaseConfiguration.db_prefix}_user_profile` (`uid`,`name`) VALUES (?,?) ON DUPLICATE KEY UPDATE `name` = VALUES(`name`)", JsonArray(arrayListOf(nextAiValue, name)), { profile ->
                                                 if (profile.succeeded()) {
                                                     this.allUsers.add(User(nextAiValue, email, SHA.getSHA256String(password), defaultUserStatus, "", PermissionManager.getRoleByName("user")))

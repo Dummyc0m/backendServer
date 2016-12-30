@@ -41,7 +41,7 @@ class ClassroomWebImplV1 : IWebAPIImpl {
                     val validationResult = user.user.verifyMFA(form.get("code"))
                     if (validationResult) {
                         user.mfaAuthed = true
-                        AuthLogService.logUserActivity(user.user, ctx.request().remoteAddress().host(), UserActivityLogType.MULTI_FACTOR_AUTHENTICATION, ctx.request().getHeader("User-Agent"))
+                        AuthLogService.logUserActivity(user.user, ctx.request().remoteAddress().host(), UserActivityLogType.MULTI_FACTOR_AUTHENTICATION)
                     }
                     ctx.response().end(JsonObject().put("mfaResult", validationResult).toString())
                 } else {
@@ -67,7 +67,7 @@ class ClassroomWebImplV1 : IWebAPIImpl {
                 if (authSuccess) {
                     user.user.disableMFA()
                 }
-                ctx.response().end(JsonObject().put("success",authSuccess).toString())
+                ctx.response().end(JsonObject().put("success", authSuccess).toString())
             } else {
                 ctx.fail(400)
             }
@@ -106,11 +106,15 @@ class ClassroomWebImplV1 : IWebAPIImpl {
         router.get("/usercenter/authlog").handler { ctx ->
             val user = (ctx.user() as WebUser).user
             AuthLogService.fetchUserActivity(user, UserActivityLogType.AUTHENTICATION, { result ->
-                ctx.response().end(result.toString())
+                if (result.succeeded()) {
+                    ctx.response().end(result.result().toString())
+                } else {
+                    ctx.fail(result.cause())
+                }
             })
         }
         router.get("/usercenter/mfaStatus").handler { ctx ->
-            ctx.response().end(JsonObject().put("mfaEnabled",(ctx.user() as WebUser).user.hasMFA()).toString())
+            ctx.response().end(JsonObject().put("mfaEnabled", (ctx.user() as WebUser).user.hasMFA()).toString())
         }
     }
 }
