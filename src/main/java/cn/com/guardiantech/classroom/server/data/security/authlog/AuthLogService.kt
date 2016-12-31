@@ -44,7 +44,7 @@ object AuthLogService : AbstractDataService() {
     fun fetchUserActivity(user: User, activityType: UserActivityLogType, handler: (AsyncResult<JsonObject>) -> Any) {
         dbClient.getConnection { conn ->
             if (conn.succeeded()) {
-                conn.result().queryWithParams("SELECT `ip`, `type`, UNIX_TIMESTAMP(`date`) as `time` FROM `${dbprefix}_authlog` WHERE `uid` = ? AND `type` = ? ORDER BY `date` DESC",
+                conn.result().queryWithParams("SELECT `ip`, `type`, UNIX_TIMESTAMP(`date`) as `time` FROM `${dbprefix}_authlog` WHERE `uid` = ? AND `type` = ? ORDER BY `date` DESC LIMIT 10",
                         JsonArray(arrayListOf(user.id, activityType.ordinal)),
                         {
                             query ->

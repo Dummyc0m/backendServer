@@ -121,12 +121,11 @@ class ClassroomWebImplV1 : IWebAPIImpl {
             IPLocationService.getLocationWithCache(ctx.pathParam("ip"), {
                 result ->
                 if (result.succeeded()){
-                    ctx.response().end(JsonObject().put("location", result.result()).toString())
+                    ctx.response().end(JsonObject().put("location", result.result().split(" ")[0]).toString())
                 }else {
                     ctx.response().end(JsonObject().put("location", "Unknown").toString())
                 }
             })
-            ctx.response().end()
         }
     }
 }
