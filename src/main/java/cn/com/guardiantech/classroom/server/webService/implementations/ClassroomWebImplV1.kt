@@ -2,6 +2,7 @@ package cn.com.guardiantech.classroom.server.webService.implementations
 
 import cn.codetector.util.Validator.MD5
 import cn.codetector.util.Validator.SHA
+import cn.com.guardiantech.classroom.server.data.multifactorauthentication.MFAUtil
 import cn.com.guardiantech.classroom.server.data.security.authlog.AuthLogService
 import cn.com.guardiantech.classroom.server.data.security.authlog.UserActivityLogType
 import cn.com.guardiantech.classroom.server.data.security.ipLoaction.IPLocationService
@@ -53,10 +54,19 @@ class ClassroomWebImplV1 : IWebAPIImpl {
                 ctx.response().end(JsonObject().put("mfaResult", user.mfaAuthed).toString())
             }
         }
-        router.get("/auth/setupmfa").handler { ctx ->
+        router.get("/auth/mfa/getToken").handler { ctx ->
+            ctx.response().end(JsonObject().put("token",MFAUtil.generateBase32Secret()).toString())
+        }
+        router.post("/auth/setupmfa").handler { ctx ->
             val user = ctx.user() as WebUser
-            if (!user.user.hasMFA()) {
-                ctx.response().end(JsonObject().put("secret", user.user.generateMFAToken()).toString())
+            val form = ctx.request().formAttributes()
+            if (!user.user.hasMFA() && form.contains("secret") && form.contains("code")) {
+                if (MFAUtil.generateCurrentNumber(form.get("secret")).equals(form.get("code"), ignoreCase = true)){
+                    user.user.setUpMFA(form.get("secret"))
+                    ctx.response().end(JsonObject().put("success", true).toString())
+                } else {
+                    ctx.response().end(JsonObject().put("success", false).toString())
+                }
             } else {
                 ctx.fail(400)
             }

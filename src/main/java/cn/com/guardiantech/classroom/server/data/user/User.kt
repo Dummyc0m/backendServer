@@ -64,9 +64,8 @@ class User(val id: Int, var email: String, var passwordHash: String, var account
         markChange()
     }
 
-    fun generateMFAToken(): String {
-        this.mfa = MFAUtil.generateBase32Secret()
+    fun setUpMFA(token: String){
+        this.mfa = token
         markChange()
-        return this.mfa
     }
 }
