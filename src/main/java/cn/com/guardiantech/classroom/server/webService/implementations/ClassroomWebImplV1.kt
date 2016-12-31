@@ -57,15 +57,16 @@ class ClassroomWebImplV1 : IWebAPIImpl {
         router.get("/auth/mfa/getToken").handler { ctx ->
             ctx.response().end(JsonObject().put("token",MFAUtil.generateBase32Secret()).toString())
         }
-        router.post("/auth/setupmfa").handler { ctx ->
+        router.post("/auth/mfa/setup").handler { ctx ->
             val user = ctx.user() as WebUser
             val form = ctx.request().formAttributes()
             if (!user.user.hasMFA() && form.contains("secret") && form.contains("code")) {
                 if (MFAUtil.generateCurrentNumber(form.get("secret")).equals(form.get("code"), ignoreCase = true)){
                     user.user.setUpMFA(form.get("secret"))
-                    ctx.response().end(JsonObject().put("success", true).toString())
+                    ctx.response().end(JsonObject().put("succeed", true).toString())
                 } else {
-                    ctx.response().end(JsonObject().put("success", false).toString())
+                    ctx.response().end(JsonObject().put("succeed" +
+                            "", false).toString())
                 }
             } else {
                 ctx.fail(400)
