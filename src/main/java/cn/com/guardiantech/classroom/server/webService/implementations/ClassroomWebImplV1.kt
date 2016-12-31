@@ -4,6 +4,7 @@ import cn.codetector.util.Validator.MD5
 import cn.codetector.util.Validator.SHA
 import cn.com.guardiantech.classroom.server.data.security.authlog.AuthLogService
 import cn.com.guardiantech.classroom.server.data.security.authlog.UserActivityLogType
+import cn.com.guardiantech.classroom.server.data.security.ipLoaction.IPLocationService
 import cn.com.guardiantech.classroom.server.data.user.UserHash
 import cn.com.guardiantech.classroom.server.data.user.UserManager
 import cn.com.guardiantech.classroom.server.data.user.WebUser
@@ -115,6 +116,17 @@ class ClassroomWebImplV1 : IWebAPIImpl {
         }
         router.get("/usercenter/mfaStatus").handler { ctx ->
             ctx.response().end(JsonObject().put("mfaEnabled", (ctx.user() as WebUser).user.hasMFA()).toString())
+        }
+        router.get("/usercenter/ipGeolocation/:ip").handler { ctx ->
+            IPLocationService.getLocationWithCache(ctx.pathParam("ip"), {
+                result ->
+                if (result.succeeded()){
+                    ctx.response().end(JsonObject().put("location", result.result()).toString())
+                }else {
+                    ctx.response().end(JsonObject().put("location", "Unknown").toString())
+                }
+            })
+            ctx.response().end()
         }
     }
 }
