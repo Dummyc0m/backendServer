@@ -72,14 +72,14 @@ class ClassroomWebImplV1 : IWebAPIImpl {
                 ctx.fail(400)
             }
         }
-        router.post("/auth/removemfa").handler { ctx ->
+        router.post("/auth/mfa/disable").handler { ctx ->
             val user = ctx.user() as WebUser
             if (ctx.request().formAttributes().contains("code")) {
                 val authSuccess = user.user.verifyMFA(ctx.request().getFormAttribute("code"))
                 if (authSuccess) {
                     user.user.disableMFA()
                 }
-                ctx.response().end(JsonObject().put("success", authSuccess).toString())
+                ctx.response().end(JsonObject().put("succeed", authSuccess).toString())
             } else {
                 ctx.fail(400)
             }
@@ -115,6 +115,7 @@ class ClassroomWebImplV1 : IWebAPIImpl {
             ctx.response().end()
         }
 
+        //Usercenter - Account
         router.get("/usercenter/authlog").handler { ctx ->
             val user = (ctx.user() as WebUser).user
             AuthLogService.fetchUserActivity(user, UserActivityLogType.AUTHENTICATION, { result ->
@@ -138,5 +139,7 @@ class ClassroomWebImplV1 : IWebAPIImpl {
                 }
             })
         }
+
+        //Usercenter - Billing
     }
 }

@@ -12,7 +12,7 @@ object CourseService : AbstractDataService() {
     val courseList: MutableList<Course> = ArrayList<Course>()
 
     override fun initialize() {
-        logger.info("Initializing ProfileService...")
+        logger.info("Initializing CourseService...")
     }
 
     override fun saveToDatabase(action: () -> Unit) {

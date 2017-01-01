@@ -103,8 +103,8 @@ object UserManager : AbstractDataService() {
                                         if (insert.succeeded()) {
                                             conn.result().updateWithParams("INSERT INTO `${DatabaseConfiguration.db_prefix}_user_profile` (`uid`,`name`) VALUES (?,?) ON DUPLICATE KEY UPDATE `name` = VALUES(`name`)", JsonArray(arrayListOf(nextAiValue, name)), { profile ->
                                                 if (profile.succeeded()) {
-                                                    this.allUsers.add(User(nextAiValue, email, SHA.getSHA256String(password), defaultUserStatus, "", PermissionManager.getRoleByName("user")))
                                                     markChange()
+                                                    this.allUsers.add(User(nextAiValue, email, SHA.getSHA256String(password), defaultUserStatus, "", PermissionManager.getRoleByName("user")))
                                                 } else {
                                                     logger.warn(profile.cause())
                                                     saveToDatabase {
