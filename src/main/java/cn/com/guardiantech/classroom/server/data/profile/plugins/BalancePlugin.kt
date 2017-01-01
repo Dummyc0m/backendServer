@@ -2,6 +2,7 @@ package cn.com.guardiantech.classroom.server.data.profile.plugins
 
 import cn.com.guardiantech.classroom.server.api.IProfileService
 import io.vertx.core.json.JsonObject
+import io.vertx.core.logging.Logger
 
 /**
  * Created by Codetector on 2016/12/31.

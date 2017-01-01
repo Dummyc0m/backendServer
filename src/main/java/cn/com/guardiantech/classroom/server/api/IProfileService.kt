@@ -1,6 +1,8 @@
 package cn.com.guardiantech.classroom.server.api
 
 import io.vertx.core.json.JsonObject
+import io.vertx.core.logging.Logger
+import io.vertx.core.logging.LoggerFactory
 
 interface IProfileService {
     fun getServiceName() :String
