@@ -10,6 +10,7 @@ import cn.com.guardiantech.classroom.server.data.user.UserHash
 import cn.com.guardiantech.classroom.server.data.user.UserManager
 import cn.com.guardiantech.classroom.server.data.user.WebUser
 import cn.com.guardiantech.classroom.server.webService.*
+import com.google.common.base.Strings
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
@@ -96,7 +97,7 @@ class ClassroomWebImplV1 : IWebAPIImpl {
         }
         router.post("/register").handler { ctx ->
             val form = ctx.request().formAttributes()
-            if (form.contains("email") and form.contains("fullName") and form.contains("password")) {
+            if ( (!Strings.isNullOrEmpty(form.get("email"))) and (!Strings.isNullOrEmpty(form.get("fullName"))) and (!Strings.isNullOrEmpty(form.get("password")))) {
                 UserManager.registerUser(form.get("email"), form.get("password"), form.get("fullName"), {
                     result ->
                     if (result.succeeded()) {
