@@ -26,7 +26,7 @@
         <Logger name="io.vertx.ext.auth.jwt.impl.JWT" level="WARN"/>
         <Logger name="io.vertx.ext.web.impl.RoutingContextImplBase" level="WARN"/>
         <Logger name="io.vertx.ext.web.impl.RouterImpl" level="WARN"/>
-        <Root level="trace">
+        <Root level="INFO">
             <AppenderRef ref="SysOut"/>
             <AppenderRef ref="File" level="warn"/>
         </Root>

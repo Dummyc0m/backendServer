@@ -23,7 +23,7 @@ object ProfileService : AbstractDataService(){
 
     override fun initialize() {
         logger.info("Initializing ProfileService...")
-        logger.info("Root Service name ${this.javaClass.canonicalName}")
+        logger.info("Root Service name ${this.javaClass.`package`.name}")
         logger.info("Loading ProfilePlugins...")
         val files = profilePluginFolder.listFiles { file -> file.name.toLowerCase().endsWith(".jar")}
         logger.info("${files.size} Jar(s) found in plugins/profile folder")
@@ -38,7 +38,15 @@ object ProfileService : AbstractDataService(){
             plugins.add(plugin)
         }
         //Self-contained packages (Reflection)
-        val refelections = Reflections()
+        val reflection = Reflections("${this.javaClass.`package`.name}.plugins")
+        val clazz = reflection.getSubTypesOf(IProfileService::class.java)
+        clazz.forEach { plugin ->
+            val loadingPlugin = plugin.newInstance()
+            logger.info("PluginService ${loadingPlugin.getServiceName()} Loaded.")
+            plugins.add(loadingPlugin)
+        }
+
+        logger.info("ProfilePlugin Loading complete, ${plugins.size} Plugins Loaded")
     }
 
     override fun saveToDatabase(action: () -> Unit) {
