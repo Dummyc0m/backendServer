@@ -25,7 +25,7 @@ object UserHash {
     private var changed = false
 
     fun save() {
-        logger.trace("Saving login Cache...")
+        logger.info("Saving login Cache...")
         removeTimedOutUsers(DEFAULT_TIMEOUT)
         val writer = PrintWriter(FileWriter(targetCacheFile))
         val dataArray = JsonArray()
@@ -34,12 +34,12 @@ object UserHash {
         }
         writer.println(JsonObject().put("cache", dataArray).toString())
         writer.close()
-        logger.trace("Login Cache saved!")
+        logger.info("Login Cache saved!")
         changed = false
     }
 
     fun loadCache() {
-        logger.trace("Initializing UserHash configuration")
+        logger.info("Initializing UserHash configuration")
         if (targetCacheFile.exists() && targetCacheFile.isFile) {
             val dataString = Files.toString(targetCacheFile, Charset.forName("utf-8"))
             if (dataString.isNotBlank()) {
@@ -50,7 +50,7 @@ object UserHash {
                         allUsers.put(item .getString("key"), WebUser(UserManager.getUserById(userObject.getInteger("id")), item.getLong("lastActive"), userObject.getBoolean("mfa")))
                     }
                 }
-                logger.trace("All (${allUsers.size}) user cache loaded")
+                logger.info("All (${allUsers.size}) user cache loaded")
                 removeTimedOutUsers(DEFAULT_TIMEOUT)
             }
         }
@@ -92,7 +92,7 @@ object UserHash {
             }
         }
         if (count > 0) {
-            logger.trace("$count timed out user(s) removed")
+            logger.info("$count timed out user(s) removed")
             markChange()
         }
     }

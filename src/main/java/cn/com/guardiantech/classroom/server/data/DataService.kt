@@ -78,6 +78,7 @@ object DataService {
     fun load() {
         PermissionManager.loadFromDatabase {
             UserManager.loadFromDatabase {
+                ProfileService.loadFromDatabase()
                 AvatarManager.loadFromDatabase()
                 UserHash.loadCache()
                 logger.info("Data Service Loaded")

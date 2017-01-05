@@ -24,8 +24,8 @@ object UserManager : AbstractDataService() {
     }
 
     override fun saveToDatabase(action: () -> Unit) {
-        dbClient!!.getConnection { conn ->
-            logger.trace("Saving users to configuration...")
+        dbClient.getConnection { conn ->
+            logger.info("Saving users to configuration...")
             val users: MutableList<JsonArray> = ArrayList()
             this.allUsers.forEach { user ->
                 users.add(JsonArray().add(user.id).add(user.email).add(user.passwordHash).add(user.accountStatus).add(user.mfa).add(user.role.name))
@@ -39,7 +39,7 @@ object UserManager : AbstractDataService() {
                         result.result().forEach {
                             if (it > 0) success++ else fail++
                         }
-                        logger.trace("User save complete, Succeed:$success, Failed:$fail")
+                        logger.info("User save complete, Succeed:$success, Failed:$fail")
                     }
                     action.invoke()
                 })
@@ -51,9 +51,8 @@ object UserManager : AbstractDataService() {
     }
 
     override fun loadFromDatabase(action: () -> Unit) {
-        assert(isInitialized())
         dbClient.getConnection { conn ->
-            logger.trace("Loading Users from Database...")
+            logger.info("Loading Users from Database...")
             if (conn.succeeded()) {
                 conn.result().query("SELECT * FROM `${DatabaseConfiguration.db_prefix}_auth`", { result ->
                     allUsers.clear()
@@ -62,7 +61,7 @@ object UserManager : AbstractDataService() {
                         allUsers.add(user)
                     }
                     val userCount = allUsers.size
-                    logger.trace("User load complete, $userCount user(s) loaded")
+                    logger.info("User load complete, $userCount user(s) loaded")
                     action.invoke()
                 })
             } else {
@@ -93,7 +92,6 @@ object UserManager : AbstractDataService() {
             if (conn.succeeded()) {
                 conn.result().queryWithParams("SELECT count(*) as `count` FROM `${DatabaseConfiguration.db_prefix}_auth` WHERE `email` = ? ", JsonArray().add(email), { countCheck ->
                     if (countCheck.succeeded()) {
-                        logger.info(countCheck.result().results)
                         if (countCheck.result().results[0].getInteger(0) < 1) {
                             conn.result().queryWithParams("SELECT AUTO_INCREMENT as `value` FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?", JsonArray(arrayListOf(DatabaseConfiguration.db_name,"${DatabaseConfiguration.db_prefix}_auth")), {
                                 ai ->

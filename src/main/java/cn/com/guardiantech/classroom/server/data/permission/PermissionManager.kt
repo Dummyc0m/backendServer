@@ -147,7 +147,7 @@ object PermissionManager : AbstractDataService() {
 
     fun loadPermissionsFromDatabase(action: () -> Unit) {
         assert(isInitialized())
-        dbClient!!.getConnection { conn ->
+        dbClient.getConnection { conn ->
             if (conn.succeeded()) {
                 logger.trace("Loading permissions from configuration...")
                 conn.result().query("SELECT * FROM `${DatabaseConfiguration.db_prefix}_permission`", {
