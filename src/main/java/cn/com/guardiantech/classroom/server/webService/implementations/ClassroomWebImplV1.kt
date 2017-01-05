@@ -107,7 +107,6 @@ class ClassroomWebImplV1 : IWebAPIImpl {
                         logger.warn(result.cause())
                     }
                 })
-            } else {
                 ctx.fail(400)
             }
         }

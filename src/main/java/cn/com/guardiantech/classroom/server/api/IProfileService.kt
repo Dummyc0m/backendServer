@@ -9,7 +9,7 @@ interface IProfileService {
     open fun isDataValid(data: String): Boolean {
         return true
     }
-    open fun getDefaultData(): String {
+    open fun generateDefault(vararg params: String): String{
         return JsonObject().toString()
     }
     open fun parseData(data: String): JsonObject {
@@ -17,5 +17,8 @@ interface IProfileService {
     }
     open fun encodeData(data: JsonObject): String {
         return data.toString()
+    }
+    open fun upgradeData(oldData: String): String{
+        return generateDefault(oldData)
     }
 }
