@@ -3,6 +3,7 @@ package cn.com.guardiantech.classroom.server.webService.implementations
 import cn.codetector.util.Validator.MD5
 import cn.codetector.util.Validator.SHA
 import cn.com.guardiantech.classroom.server.data.multifactorauthentication.MFAUtil
+import cn.com.guardiantech.classroom.server.data.profile.ProfileService
 import cn.com.guardiantech.classroom.server.data.security.authlog.AuthLogService
 import cn.com.guardiantech.classroom.server.data.security.authlog.UserActivityLogType
 import cn.com.guardiantech.classroom.server.data.security.ipLoaction.IPLocationService
@@ -113,6 +114,12 @@ class ClassroomWebImplV1 : IWebAPIImpl {
         router.route("/auth/signOut").handler { ctx ->
             UserHash.revokeToken(ctx.request().getHeader("Authorization"))
             ctx.response().end()
+        }
+
+        //User Profile
+        router.get("/profile/:serviceName").handler { ctx ->
+            val user = ctx.user() as WebUser
+            ctx.response().end(ProfileService.fetchUserProfile(user.user, ctx.pathParam("serviceName")).remove("version").toString())
         }
 
         //Usercenter - Account

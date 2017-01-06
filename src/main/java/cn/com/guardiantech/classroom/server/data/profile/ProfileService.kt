@@ -65,9 +65,14 @@ object ProfileService : AbstractDataService() {
         val userProfile = UserProfile()
         plugins.values.forEach { p ->
             var pluginData = Strings.nullToEmpty(data.getString(p.getServiceName()))
-            val validData  = p.isDataValid(pluginData)
-            if (!validData){
-                pluginData = p.upgradeData(pluginData)
+            var validData  = p.isDataValid(pluginData)
+            if (pluginData.isBlank()) {
+                pluginData = p.generateDefault()
+                validData = false
+            } else {
+                if (!validData){
+                    pluginData = p.upgradeData(pluginData)
+                }
             }
             userProfile.set(p, pluginData, !validData)
         }
@@ -91,7 +96,29 @@ object ProfileService : AbstractDataService() {
     }
 
     override fun saveToDatabase(action: () -> Unit) {
-
+        dbClient.getConnection { conn ->
+            if (conn.succeeded()){
+                val connection = conn.result()
+                connection.setAutoCommit(false, {
+                    dbCache.forEach { entry ->
+                        if (entry.value.hasChange()) {
+                            plugins.values.forEach { p ->
+                                connection.updateWithParams("UPDATE `${dbprefix}_user_profile` SET `${p.getServiceName()}` = ? WHERE `uid` = ?", JsonArray().add(entry.value.get(p)).add(entry.key.id), {})
+                            }
+                        }
+                    }
+                    connection.setAutoCommit(true, {
+                        connection.commit {
+                            connection.close()
+                            action.invoke()
+                            logger.info("ProfileService cache saved to database")
+                        }
+                    })
+                })
+            } else {
+                action.invoke()
+            }
+        }
     }
 
     override fun loadFromDatabase(action: () -> Unit) {
@@ -121,11 +148,12 @@ object ProfileService : AbstractDataService() {
                                 connection.setAutoCommit(false, {
                                     newColumns.forEach { column ->
                                         connection.update("ALTER TABLE `${dbprefix}_user_profile` ADD `${column}` TEXT CHARACTER SET utf8 COLLATE utf8_bin NULL", {
-
+                                            logger.info("Profile Column ${column} added")
                                         })
                                     }
                                     connection.commit {
                                         connection.setAutoCommit(true, {
+                                            logger.info("Profile Columns committed")
                                             connection.close()
                                             loadData(action)
                                         })
@@ -141,6 +169,10 @@ object ProfileService : AbstractDataService() {
         }
     }
 
+    fun registerNewUser(user: User, data: JsonObject){
+
+    }
+
     fun hasPlugin(name: String): Boolean {
         return plugins.containsKey(name)
     }
@@ -152,31 +184,11 @@ object ProfileService : AbstractDataService() {
         throw IllegalArgumentException("Plugin Not found")
     }
 
-    fun fetchUserProfile(user: User, profile: String, callback: (AsyncResult<JsonObject>) -> Unit) {
+    fun fetchUserProfile(user: User, profile: String): JsonObject {
         if (hasPlugin(profile)) {
             val plugin = getPlugin(profile)
-            dbClient.getConnection { con ->
-                if (con.succeeded()) {
-                    con.result().queryWithParams("SELECT `${profile}` FROM `${dbprefix}_user_profile` WHERE `uid` = ?", JsonArray().add(user.id), { query ->
-                        if (query.succeeded()) {
-                            if (query.result().numRows > 0) {
-                                val dataOfUser = query.result().results[0].getString(0)
-                                if (!plugin.isDataValid(dataOfUser)) {
-
-                                }
-                            } else {
-                                callback.invoke(Future.failedFuture("User DNE"))
-                            }
-                        } else {
-                            callback.invoke(Future.failedFuture(query.cause()))
-                        }
-                        con.result().close()
-                    })
-                } else {
-                    // [] are great!!!!
-                    callback.invoke(Future.failedFuture(con.cause()))
-                }
-            }
+            return plugin.parseData(dbCache[user]!!.get(plugin))
         }
+        return JsonObject().put("error","Invalid profile name")
     }
 }

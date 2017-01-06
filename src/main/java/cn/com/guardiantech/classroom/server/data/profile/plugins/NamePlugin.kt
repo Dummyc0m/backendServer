@@ -11,6 +11,19 @@ class NamePlugin: IProfileService{
         return "name"
     }
 
+    override fun isDataValid(data: String): Boolean {
+        if (data.startsWith("{") && data.endsWith("}")) {
+            val json = JsonObject(data)
+            return json.containsKey("version") && json.getInteger("version") == 1
+        } else {
+            return false
+        }
+    }
+
+    override fun upgradeData(oldData: String): String {
+        return JsonObject().put("version", 1).put("name", oldData).toString()
+    }
+
     override fun generateDefault(vararg params: String): String {
         if (params.isNotEmpty())
             return JsonObject().put("name", params[0]).toString()
