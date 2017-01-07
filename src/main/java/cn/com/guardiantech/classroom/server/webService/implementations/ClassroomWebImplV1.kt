@@ -13,10 +13,13 @@ import cn.com.guardiantech.classroom.server.data.user.WebUser
 import cn.com.guardiantech.classroom.server.webService.*
 import com.google.common.base.Strings
 import io.vertx.core.Vertx
+import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
 import io.vertx.ext.jdbc.JDBCClient
 import io.vertx.ext.web.Router
+import io.vertx.ext.web.handler.BodyHandler
+import io.vertx.ext.web.handler.impl.BodyHandlerImpl
 
 @WebAPIImpl(prefix = "v1")
 class ClassroomWebImplV1 : IWebAPIImpl {
@@ -115,11 +118,23 @@ class ClassroomWebImplV1 : IWebAPIImpl {
             UserHash.revokeToken(ctx.request().getHeader("Authorization"))
             ctx.response().end()
         }
+        router.route("/auth/permission/:permission").handler {
+            it.user().isAuthorised(it.pathParam("permission"), { perm ->
+                it.response().end(JsonObject().put("permission", it.pathParam("permission")).put("isAuthorized", perm.result()).toString())
+            })
+        }
+        router.route("/auth/permission/").handler { ctx ->
+            val allPermissions = JsonArray()
+            (ctx.user() as WebUser).user.role.allPermissions().forEach { permission ->
+                allPermissions.add(permission.name)
+            }
+            ctx.response().end(JsonObject().put("permissions",allPermissions).encode())
+        }
 
         //User Profile
         router.get("/profile/:serviceName").handler { ctx ->
             val user = ctx.user() as WebUser
-            ctx.response().end(ProfileService.fetchUserProfile(user.user, ctx.pathParam("serviceName")).remove("version").toString())
+            ctx.response().end(ProfileService.fetchUserProfile(user.user, ctx.pathParam("serviceName")).toString())
         }
 
         //Usercenter - Account
@@ -147,6 +162,11 @@ class ClassroomWebImplV1 : IWebAPIImpl {
             })
         }
 
-        //Usercenter - Billing
+        //FileService - Upload / Download
+//        router.post("/file/upload").handler { ctx ->
+//            ctx.request().uploadHandler { upload ->
+//
+//            }
+//        }
     }
 }

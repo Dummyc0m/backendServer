@@ -27,7 +27,6 @@ object ProfileService : AbstractDataService() {
         if (!profilePluginFolder.exists()) {
             profilePluginFolder.mkdirs()
         }
-        logger.info("NOT LOADING!!!")//TODO
     }
 
     override fun initialize() {

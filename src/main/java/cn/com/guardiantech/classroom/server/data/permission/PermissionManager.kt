@@ -72,9 +72,8 @@ object PermissionManager : AbstractDataService() {
     }
 
     fun savePermissionTable(action: () -> Unit) {
-        assert(isInitialized())
         logger.trace("Saving Permission Table...")
-        dbClient!!.getConnection { conn ->
+        dbClient.getConnection { conn ->
             if (conn.succeeded()) {
                 val params = ArrayList<JsonArray>()
                 serverPermissions.permissions.values.forEach { perm ->
@@ -100,9 +99,8 @@ object PermissionManager : AbstractDataService() {
     }
 
     fun saveRolesTable(action: () -> Unit) {
-        assert(isInitialized())
         logger.trace("Saving Roles Table...")
-        dbClient!!.getConnection { conn ->
+        dbClient.getConnection { conn ->
             if (conn.succeeded()) {
                 val roles = ArrayList<JsonArray>()
                 serverRoles.values.forEach { role ->

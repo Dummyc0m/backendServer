@@ -63,8 +63,10 @@ fun authHandler(router: Router, noAuthExceptions: Set<String>) {
                 ctx.setUser(UserHash.getUserByAuthKey(auth))
                 if ((ctx.user() as WebUser).mfaAuthed) {
                     (ctx.user() as WebUser).renewSession()
+                    ctx.next()
+                } else {
+                    ctx.response().setStatusCode(401).end(JsonObject().put("error", "Require MFA").toString())
                 }
-                ctx.next()
             } else {
                 ctx.response().setStatusCode(401).end(JsonObject().put("error", "Invalid Token").toString())
             }
