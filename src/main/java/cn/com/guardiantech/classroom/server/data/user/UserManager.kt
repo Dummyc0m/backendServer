@@ -6,10 +6,12 @@ import cn.com.guardiantech.classroom.server.data.AbstractDataService
 import cn.com.guardiantech.classroom.server.data.configuration.DatabaseConfiguration
 import cn.com.guardiantech.classroom.server.data.permission.Permission
 import cn.com.guardiantech.classroom.server.data.permission.PermissionManager
+import cn.com.guardiantech.classroom.server.data.profile.ProfileService
 import com.sun.org.apache.xpath.internal.operations.Bool
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.json.JsonArray
+import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
 import java.util.*
 
@@ -99,19 +101,11 @@ object UserManager : AbstractDataService() {
                                     val nextAiValue = ai.result().rows[0].getInteger("value")
                                     conn.result().updateWithParams("INSERT INTO `${DatabaseConfiguration.db_prefix}_auth` (`email`,`password`,`2fa`, accountStatus) VALUES (?,?,'',?)", JsonArray(arrayListOf(email, SHA.getSHA256String(password), defaultUserStatus)), { insert ->
                                         if (insert.succeeded()) {
-                                            conn.result().updateWithParams("INSERT INTO `${DatabaseConfiguration.db_prefix}_user_profile` (`uid`,`name`) VALUES (?,?) ON DUPLICATE KEY UPDATE `name` = VALUES(`name`)", JsonArray(arrayListOf(nextAiValue, name)), { profile ->
-                                                if (profile.succeeded()) {
-                                                    markChange()
-                                                    this.allUsers.add(User(nextAiValue, email, SHA.getSHA256String(password), defaultUserStatus, "", PermissionManager.getRoleByName("user")))
-                                                } else {
-                                                    logger.warn(profile.cause())
-                                                    saveToDatabase {
-                                                        loadFromDatabase()
-                                                    }
-                                                }
-                                                conn.result().close()
-                                                handler.invoke(Future.succeededFuture(true))
-                                            })
+                                            val thisUser = User(nextAiValue, email, SHA.getSHA256String(password), defaultUserStatus, "", PermissionManager.getRoleByName("user"))
+                                            this.allUsers.add(thisUser)
+                                            markChange()
+                                            ProfileService.registerNewUser(thisUser, JsonObject().put("name", JsonObject().put("name", name)))
+                                            conn.result().close()
                                         } else {
                                             handler.invoke(Future.failedFuture(insert.cause()))
                                             conn.result().close()

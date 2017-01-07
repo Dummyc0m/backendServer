@@ -170,7 +170,15 @@ object ProfileService : AbstractDataService() {
     }
 
     fun registerNewUser(user: User, data: JsonObject){
-
+        dbClient.getConnection { conn ->
+            if (conn.succeeded()){
+                conn.result().updateWithParams("INSERT INTO `${dbprefix}_user_profile` (`uid`) VALUES (?)", JsonArray().add(user.id), {
+                    conn.result().close()
+                })
+            }
+        }
+        dbCache.put(user, UserProfile())
+        dbCache.get(user)!!.set(getPlugin("name"),getPlugin("name").encodeData(data.getJsonObject("name")))
     }
 
     fun hasPlugin(name: String): Boolean {

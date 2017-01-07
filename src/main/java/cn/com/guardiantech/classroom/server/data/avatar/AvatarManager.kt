@@ -46,7 +46,7 @@ object AvatarManager : AbstractDataService() {
             logger.info("Avatar directory created : ${avatarDirectory.name}")
             avatarDirectory.mkdir()
         }
-        dbClient!!.getConnection { con ->
+        dbClient.getConnection { con ->
             if (con.succeeded()){
                 con.result().query("SELECT * FROM `${DatabaseConfiguration.db_prefix}_avatar`", { q ->
                     if (q.succeeded()){
@@ -62,7 +62,7 @@ object AvatarManager : AbstractDataService() {
     }
 
     fun getAvatarForUser(user: User, handler: (AsyncResult<Buffer>) -> Any) {
-        dbClient!!.getConnection { con ->
+        dbClient.getConnection { con ->
             if (con.succeeded()) {
 
             } else {
