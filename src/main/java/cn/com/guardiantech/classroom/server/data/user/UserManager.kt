@@ -105,6 +105,7 @@ object UserManager : AbstractDataService() {
                                             this.allUsers.add(thisUser)
                                             markChange()
                                             ProfileService.registerNewUser(thisUser, JsonObject().put("name", JsonObject().put("name", name)))
+                                            handler.invoke(Future.succeededFuture(true))
                                             conn.result().close()
                                         } else {
                                             handler.invoke(Future.failedFuture(insert.cause()))
