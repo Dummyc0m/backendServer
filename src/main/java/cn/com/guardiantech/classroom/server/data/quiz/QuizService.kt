@@ -1,18 +1,17 @@
 package cn.com.guardiantech.classroom.server.data.quiz
 
 import cn.com.guardiantech.classroom.server.data.AbstractDataService
+import io.vertx.core.logging.LoggerFactory
 
 object QuizService: AbstractDataService() {
+    val logger = LoggerFactory.getLogger("QuizService")
     override fun initialize() {
-        throw UnsupportedOperationException("not implemented") //To change body of created functions use File | Settings | File Templates.
+        logger.info("QuizService Initialized")
     }
 
     override fun saveToDatabase(action: () -> Unit) {
-        throw UnsupportedOperationException("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     override fun loadFromDatabase(action: () -> Unit) {
-        throw UnsupportedOperationException("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
-
 }
